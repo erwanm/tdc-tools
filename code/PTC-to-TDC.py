@@ -11,6 +11,7 @@ import scispacy
 
 MAX_DOCS_BY_FILE = 50000
 MEDPMC_CATEGORIES = ["filtered-medline", "pmc-articles", "pmc-abstracts"]
+SEPARATOR_CONCEPT_ID_TYPE = "|"
 
 # init scispacy model
 nlp = spacy.load("en_core_sci_sm")
@@ -67,7 +68,7 @@ def merge_two_sentences(sentences, sent_no):
 #
 # returns the Spacy Document
 #
-def extract_data_from_passage(pmid, year, partId, elemId, passage, files_triple_list, count):
+def extract_data_from_passage(pmid, year, partId, elemId, passage, files_triple_list, count, filename, doc_id):
     doc = nlp(passage.text)
 #    print("DEBUG extract_data_from_passage. passage offset = ",passage.offset,"; length =",len(passage.text))
 #    print(" FULL TEXT = ",passage.text)
@@ -81,8 +82,10 @@ def extract_data_from_passage(pmid, year, partId, elemId, passage, files_triple_
         # storing the offset FROM DOCUMENT START instead of passage start, because the annotations offsets are based on the document
         offset += passage.offset
         sentences.append((offset, str(sentenceTokens)))
+    # passage_annotation[sent_no][posititon] = list of concepts at this position
+    # remark: a position is supposed to have a single concept but there are a few exceptions in the data for which a warning is printed
+    passage_annotations = defaultdict(lambda: defaultdict(list))
     # 2) iterate the PTC annotations and store them
-    passage_annotations = defaultdict(dict)
     for annot in passage.annotations:
 #        print("    DEBUG text =",annot.text)
 #        print("    DEBUG infons =",annot.infons)
@@ -90,13 +93,16 @@ def extract_data_from_passage(pmid, year, partId, elemId, passage, files_triple_
             count["annot_without_identifier"] += 1
         else:
             count["annotations"] += 1
-            concept = annot.infons["identifier"] + "@" + annot.infons["type"]
+            if SEPARATOR_CONCEPT_ID_TYPE in annot.infons["identifier"] or SEPARATOR_CONCEPT_ID_TYPE in annot.infons["type"]:
+                raise Exception("Bug: the separator character '"+SEPARATOR_CONCEPT_ID_TYPE+"' is present in id '"+annot.infons["identifier"]+"' and/or type '"+annot.infons["type"]+"'")
+            concept = annot.infons["identifier"] + SEPARATOR_CONCEPT_ID_TYPE + annot.infons["type"]
             for location in annot.locations:
                 #            print("      DEBUG location =", location.offset,";",location.length)
                 #            print("      TEST PASSAGE: ", ) # ok
-                annot_content_from_passage = passage.text[location.offset-passage.offset:location.offset-passage.offset+location.length]
+                annot_content_from_passage = passage.text[location.offset -passage.offset:location.offset -passage.offset +location.length]
                 if annot_content_from_passage != annot.text: # sanity check (not strictly necessary)
-                    raise Exception("Bug: the annotation text '"+annot.text+"' and the text extracted at the specified location in the passage '"+annot_content_from_passage+"' don't match.")
+                    print("Warning: sanity check failed in doc '"+doc_id+"', file "+filename+": the annotation text '"+annot.text+"' and the text extracted at the provided location in the passage '"+annot_content_from_passage+"' don't match. Details: concept = '"+concept+"'; passage = '"+passage.text+"', location: offset = "+str(location.offset-passage.offset)+", length = "+str(location.length),file=sys.stderr)
+                    count["sanity_check_against_PTC_text_failed"] += 1
                 # trying to get it as spacy sentence: 
                 (sent_no, sent_offset) = map_passage_offset(location.offset, sentences)
                 # possible problem: the annotation spans over two Spacy sentences
@@ -108,12 +114,18 @@ def extract_data_from_passage(pmid, year, partId, elemId, passage, files_triple_
                 annot_content_from_my_sentences = sentences[sent_no][1][sent_offset:sent_offset+location.length]
                 #            print("      TEST PASSAGE2: ", annot_content_from_my_sentences)
                 if annot_content_from_my_sentences != annot.text:  # important: check that the extracted term matches the term in the annotation 
-                    raise Exception("Bug: the annotation text '"+annot.text+"' and the text extracted at the specified location in the corresponding sentence '"+annot_content_from_my_sentences+"' don't match.")
+                    print("Warning: sanity check failed in doc '"+doc_id+"', file "+filename+": the annotation text '"+annot.text+"' and the text extracted at the calculated location in the sentence '"+annot_content_from_passage+"' don't match.  Details: concept = '"+concept+"'; passage = '"+passage.text+"', location = "+str(location.offset-passage.offset),file=sys.stderr)
+                    count["sanity_check_against_sentence_position_failed"] += 1
                 # once everything ok, add to the list corresponding to the sentence in dict passage_annotations, index by sentence id and position
+                cui_line = [ pmid, partId, str(elemId), str(sent_no), concept,  str(sent_offset), str(location.length) ]
                 if passage_annotations[sent_no].get(sent_offset) is not None:
-                    raise Exception("Bug: didn't expect that")
+                    first_annot_concept = passage_annotations[sent_no][sent_offset][0][4]
+                    first_annot_length = int(passage_annotations[sent_no][sent_offset][0][6])
+                    first_annot_text = sentences[sent_no][1][sent_offset:sent_offset+first_annot_length]
+                    print("Warning: two annotations at the same position in doc '"+doc_id+"', file "+filename+": first annotation for text '"+first_annot_text+"' (concept id '"+first_annot_concept+"'; length "+str(first_annot_length)+"); second annotation for text '"+annot_content_from_my_sentences+"' (concept id '"+concept+"'; length "+str(location.length)+")",file=sys.stderr)
+                    count["multiple_annotations_same_position"] += 1
                 # note: the annotations are written later in order to order them by their order in the text (not necessarily followed in PTC)
-                passage_annotations[sent_no][sent_offset] = "%s\t%s\t%s\t%d\t%s\t%d\t%d\n" % (pmid, partId, elemId, sent_no, concept,  sent_offset, location.length)
+                passage_annotations[sent_no][sent_offset].append(cui_line)
     # the count of sentences and the writing of the .tok file is done after going through the annotations in order to account for merged sentences
     count["sentences"] += len(sentences)
     # .tok file
@@ -122,11 +134,13 @@ def extract_data_from_passage(pmid, year, partId, elemId, passage, files_triple_
         for files_triple in files_triple_list:
             files_triple[1].write("%s\t%s\t%s\t%s\t%d\t%s\n" % (pmid, year, partId, elemId, sent_no, sentence ) )
         # .cuis file
-        for (_, annot_line) in sorted(passage_annotations[sent_no].items()):
+        for (_, cui_lines) in sorted(passage_annotations[sent_no].items()):
+            for cui_line in cui_lines:
+                line = "\t".join(cui_line)+"\n"
                 for files_triple in files_triple_list:
-                    files_triple[2].write(annot_line)
+                    files_triple[2].write(line)
 
-def process_medline(doc, count, output_files, first_year, last_year, output_dir):
+def process_medline(doc, count, output_files, first_year, last_year, output_dir, filename):
     pmid = doc.id
     year = None
     title = None
@@ -158,11 +172,11 @@ def process_medline(doc, count, output_files, first_year, last_year, output_dir)
         # .raw file
         this_year_output[2][0].write("%s\t%s\t%s\t%s\n" % (pmid, year, title, abstract) )
         # .tok and .cuis files
-        extract_data_from_passage(pmid, year, "title",0, doc.passages[0], [ this_year_output[2] ], count)
-        extract_data_from_passage(pmid, year, "abstract",0, doc.passages[1], [ this_year_output[2] ], count)
+        extract_data_from_passage(pmid, year, "title",0, doc.passages[0], [ this_year_output[2] ], count, filename, doc.id)
+        extract_data_from_passage(pmid, year, "abstract",0, doc.passages[1], [ this_year_output[2] ], count, filename, doc.id)
 
 
-def process_pmc(doc, count, output_files, first_year, last_year, output_dir):
+def process_pmc(doc, count, output_files, first_year, last_year, output_dir, filename):
     doc_id = doc.id
     year = None
     title = None
@@ -204,23 +218,26 @@ def process_pmc(doc, count, output_files, first_year, last_year, output_dir):
         this_year_output_abs += ( this_year_output_abs[0]+1, this_year_output_abs[1], this_year_output_abs[2] )
         # .tok and .cuis files
         full_content = []
-        abstract = []
+        abstract = [1]
+        undef_passage_type = False
         for passageNo, passage in enumerate(doc.passages):
             passage_type = passage.infons.get('section_type')
             # ignore a few special passage types: reference, acknowledgements, author contribution
             if (passage_type is None) or (passage_type != 'REF' and passage_type != 'ACK_FUND' and passage_type != 'AUTH_CONT'):
                 if passage_type is None:
-                    print("Warning: no value for 'section_type' in doc id '"+doc_id+"'.", file=sys.stderr,flush=True)
+                    undef_passage_type = True
+#                    print("Warning: no value for 'section_type' in doc id '"+doc_id+"'.", file=sys.stderr,flush=True)
                     passage_type = "STUFF" # this will be considered part of the article body
                 if passage_type == 'TITLE':
-                    extract_data_from_passage(fullid, year, "title", passageNo, passage, [this_year_output_abs[2], this_year_output_art[2]], count)
+                    extract_data_from_passage(fullid, year, "title", passageNo, passage, [this_year_output_abs[2], this_year_output_art[2]], count, filename, doc.id)
                 elif passage_type == 'ABSTRACT':
                     abstract.append(passage.text)
-                    extract_data_from_passage(fullid, year, "abstract", passageNo, passage, [this_year_output_abs[2], this_year_output_art[2]], count)
+                    extract_data_from_passage(fullid, year, "abstract", passageNo, passage, [this_year_output_abs[2], this_year_output_art[2]], count, filename, doc.id)
                 else:  # any other passage type is considered part of the article body
                     full_content.append(passage.text)
-                    extract_data_from_passage(fullid, year, passage_type, passageNo, passage, [this_year_output_art[2]], count)
-                    
+                    extract_data_from_passage(fullid, year, passage_type, passageNo, passage, [this_year_output_art[2]], count, filename, doc.id)
+        if undef_passage_type:
+            count["pmc_contains_undef_passage_type"] += 1
         # .raw file
         this_year_output_abs[2][0].write("%s\t%s\t%s\t%s\n" % (pmid, year, title, abstract) )
         this_year_output_art[2][0].write("%s\t%s\t%s\t%s\t%s\n" % (pmid, year, title, abstract,  " . ".join(full_content)) )
@@ -251,7 +268,7 @@ for category in MEDPMC_CATEGORIES:
     if not isdir(d):
         mkdir(d) 
 
-count = { "medline" : 0, "pmc" : 0, "invalid_pmc_docs" : 0, "med_undef_year" : 0, "pmc_undef_year" : 0, "sentences" : 0, "merged_sentences" : 0 , "annot_without_identifier" : 0, "annotations" : 0 }
+count = { "medline" : 0, "pmc" : 0, "invalid_pmc_docs" : 0, "med_undef_year" : 0, "pmc_undef_year" : 0, "sentences" : 0, "merged_sentences" : 0 , "annot_without_identifier" : 0, "annotations" : 0, "pmc_contains_undef_passage_type" : 0, "multiple_annotations_same_position" : 0, "sanity_check_against_sentence_position_failed" : 0, "sanity_check_against_PTC_text_failed": 0 }
 
 # output_files[category][year] = ( current_nb_docs, current_index, triple_file_handles ) where triple_file_handles = ( raw_fh, tok_fh, cuis_fh )
 output_files = {}
@@ -264,9 +281,9 @@ for fileNo, filename in enumerate(files):
     
     for document in reader:
         if len(document.passages)==2 and document.passages[0].infons.get('type') == 'title' and document.passages[1].infons.get('type') == 'abstract':
-            process_medline(document, count, output_files, first_year, last_year, output_dir)
+            process_medline(document, count, output_files, first_year, last_year, output_dir, filename)
         elif document.passages[0].infons.get('type') == 'front':
-            process_pmc(document, count, output_files, first_year, last_year, output_dir)
+            process_pmc(document, count, output_files, first_year, last_year, output_dir, filename)
         else:
             raise Exception("Check failed: doc "+document.id+" in file "+filename+" has first passage which is neither 'title' or 'front'")
 print("")
