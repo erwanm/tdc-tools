@@ -9,9 +9,9 @@ import scispacy
 
 
 
-MAX_DOCS_BY_FILE = 50000
+MAX_DOCS_BY_FILE = 10000
 MEDPMC_CATEGORIES = ["filtered-medline", "pmc-articles", "pmc-abstracts"]
-SEPARATOR_CONCEPT_ID_TYPE = "|"
+SEPARATOR_CONCEPT_ID_TYPE = "@"
 
 # init scispacy model
 nlp = spacy.load("en_core_sci_sm")
@@ -100,9 +100,11 @@ def extract_data_from_passage(pmid, year, partId, elemId, passage, files_triple_
                 #            print("      DEBUG location =", location.offset,";",location.length)
                 #            print("      TEST PASSAGE: ", ) # ok
                 annot_content_from_passage = passage.text[location.offset -passage.offset:location.offset -passage.offset +location.length]
+                sanity_check_ok = True
                 if annot_content_from_passage != annot.text: # sanity check (not strictly necessary)
                     print("Warning: sanity check failed in doc '"+doc_id+"', file "+filename+": the annotation text '"+annot.text+"' and the text extracted at the provided location in the passage '"+annot_content_from_passage+"' don't match. Details: concept = '"+concept+"'; passage = '"+passage.text+"', location: offset = "+str(location.offset-passage.offset)+", length = "+str(location.length),file=sys.stderr)
                     count["sanity_check_against_PTC_text_failed"] += 1
+                    sanity_check_ok = False
                 # trying to get it as spacy sentence: 
                 (sent_no, sent_offset) = map_passage_offset(location.offset, sentences)
                 # possible problem: the annotation spans over two Spacy sentences
@@ -113,7 +115,8 @@ def extract_data_from_passage(pmid, year, partId, elemId, passage, files_triple_
                     (sent_no, sent_offset) = map_passage_offset(location.offset, sentences)
                 annot_content_from_my_sentences = sentences[sent_no][1][sent_offset:sent_offset+location.length]
                 #            print("      TEST PASSAGE2: ", annot_content_from_my_sentences)
-                if annot_content_from_my_sentences != annot.text:  # important: check that the extracted term matches the term in the annotation 
+                # note: if the first sanity check failed, we don't do the second one as it apparently always fails
+                if sanity_check_ok and annot_content_from_my_sentences != annot.text:  # important: check that the extracted term matches the term in the annotation 
                     print("Warning: sanity check failed in doc '"+doc_id+"', file "+filename+": the annotation text '"+annot.text+"' and the text extracted at the calculated location in the sentence '"+annot_content_from_passage+"' don't match.  Details: concept = '"+concept+"'; passage = '"+passage.text+"', location = "+str(location.offset-passage.offset),file=sys.stderr)
                     count["sanity_check_against_sentence_position_failed"] += 1
                 # once everything ok, add to the list corresponding to the sentence in dict passage_annotations, index by sentence id and position
@@ -164,11 +167,12 @@ def process_medline(doc, count, output_files, first_year, last_year, output_dir,
             this_year_output = (0, 0, create_file_handles(join(output_dir, "filtered-medline"), year, 0))
             output_files["filtered-medline"][year] = this_year_output
         if this_year_output[0] >= MAX_DOCS_BY_FILE:
-                for f in this_year_output[2]:
-                    f.close()
-                new_index = this_year_output[1]
-                this_year_output = (0, new_index, create_file_handles(join(output_dir, "filtered-medline"), year, new_index) )
-        this_year_output = (this_year_output[0]+1, this_year_output[1], this_year_output[2])
+            for f in this_year_output[2]:
+                f.close()
+            new_index = this_year_output[1] +1
+            this_year_output = (0, new_index, create_file_handles(join(output_dir, "filtered-medline"), year, new_index) )
+ #       print("DEBUG count = "+str(this_year_output_art[0]+1))
+        output_files["filtered-medline"][year] = (this_year_output[0]+1, this_year_output[1], this_year_output[2])
         # .raw file
         this_year_output[2][0].write("%s\t%s\t%s\t%s\n" % (pmid, year, title, abstract) )
         # .tok and .cuis files
@@ -207,15 +211,16 @@ def process_pmc(doc, count, output_files, first_year, last_year, output_dir, fil
             this_year_output_abs = (0, 0, create_file_handles(join(output_dir, "pmc-abstracts"), year, 0))
             output_files["pmc-abstracts"][year] = this_year_output_abs
         if this_year_output_art[0] >= MAX_DOCS_BY_FILE:  # both art and abs again
-                for f in this_year_output_art[2]:
-                    f.close()
-                for f in this_year_output_abs[2]:
-                    f.close()
-                new_index = this_year_output_art[1] + 1
-                this_year_output_art = ( 0, new_index, create_file_handles(join(output_dir, "pmc-articles" ), year, new_index) )
-                this_year_output_abs = ( 0, new_index, create_file_handles(join(output_dir, "pmc-abstracts"), year, new_index) )
-        this_year_output_art += ( this_year_output_art[0]+1, this_year_output_art[1], this_year_output_art[2] )
-        this_year_output_abs += ( this_year_output_abs[0]+1, this_year_output_abs[1], this_year_output_abs[2] )
+            for f in this_year_output_art[2]:
+                f.close()
+            for f in this_year_output_abs[2]:
+                f.close()
+            new_index = this_year_output_art[1] + 1
+            this_year_output_art = ( 0, new_index, create_file_handles(join(output_dir, "pmc-articles" ), year, new_index) )
+            this_year_output_abs = ( 0, new_index, create_file_handles(join(output_dir, "pmc-abstracts"), year, new_index) )
+#        print("DEBUG count = "+str(this_year_output_art[0]+1))
+        output_files["pmc-articles"][year] = ( this_year_output_art[0]+1, this_year_output_art[1], this_year_output_art[2] )
+        output_files["pmc-abstracts"][year] = ( this_year_output_abs[0]+1, this_year_output_abs[1], this_year_output_abs[2] )
         # .tok and .cuis files
         full_content = []
         abstract = [1]
