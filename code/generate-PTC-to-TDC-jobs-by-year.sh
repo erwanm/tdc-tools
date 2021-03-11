@@ -15,7 +15,8 @@ function writeJob {
     echo
     echo "#SBATCH -p $clusterPart"
     echo "#SBATCH -J $minYear"
-    echo "#SBATCH -t 2-00:00:00"
+#    echo "#SBATCH -t 2-00:00:00"
+#    echo "SBATCH --mem=30G"
     echo "ptcDir=\$(mktemp -d --tmpdir=/tmp \"ptc-to-tdc.XXXXXXXX\")"
     echo "squashfuse $sqsh \$ptcDir"
     echo "export PROOT_NO_SECCOMP=1"
