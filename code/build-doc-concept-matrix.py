@@ -60,7 +60,7 @@ def get_doc_key(doc_level, columns):
 
 input_multi_concept = False
 try:
-    opts, args = getopt.getopt(sys.argv,"hk")
+    opts, args = getopt.getopt(sys.argv[1:],"hk")
 except getopt.GetoptError:
     usage(sys.stderr)
     sys.exit(2)
@@ -75,14 +75,14 @@ for opt, arg in opts:
 
 # print("debug args after options: ",args)
 
-if len(args) != 5:
+if len(args) != 4:
     usage(sys.stderr)
     sys.exit(2)
 
-year = args[1]
-doc_level = args[2]
-input_file = args[3]
-output_file = args[4]
+year = args[0]
+doc_level = args[1]
+input_file = args[2]
+output_file = args[3]
 
 
 #docs = defaultdict(list)
