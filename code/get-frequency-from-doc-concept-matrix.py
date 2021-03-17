@@ -54,7 +54,7 @@ def usage(out):
 # main
 
 joint_mode = False
-jointBothTarget = False
+joint_both_target = False
 try:
     opts, args = getopt.getopt(sys.argv[1:],"hjJ")
 except getopt.GetoptError:
@@ -79,7 +79,7 @@ if len(args) != 1 and len(args) != 2:
 
 output_file = args[0]
 targetsFile = None
-if len(args) == 3:
+if len(args) == 2:
     targetsFile = args[1]
 
 
