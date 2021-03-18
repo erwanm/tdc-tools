@@ -93,8 +93,10 @@ def extract_data_from_passage(pmid, year, partId, elemId, passage, files_triple_
             count["annot_without_identifier"] += 1
         else:
             count["annotations"] += 1
-            if SEPARATOR_CONCEPT_ID_TYPE in annot.infons["identifier"] or SEPARATOR_CONCEPT_ID_TYPE in annot.infons["type"]:
-                raise Exception("Bug: the separator character '"+SEPARATOR_CONCEPT_ID_TYPE+"' is present in id '"+annot.infons["identifier"]+"' and/or type '"+annot.infons["type"]+"'")
+            if SEPARATOR_CONCEPT_ID_TYPE in annot.infons["identifier"]: # warning only (this case happens very rarely with '@' but there is at least one occurrence)
+                print("Warning: the separator character '"+SEPARATOR_CONCEPT_ID_TYPE+"' is present in id '"+annot.infons["identifier"]+"'", file=sys.stderr)
+            if SEPARATOR_CONCEPT_ID_TYPE in annot.infons["type"]:       # fatal error
+                raise Exception("Bug: the separator character '"+SEPARATOR_CONCEPT_ID_TYPE+"' is present in type '"+annot.infons["type"]+"'")
             concept = annot.infons["identifier"] + SEPARATOR_CONCEPT_ID_TYPE + annot.infons["type"]
             for location in annot.locations:
                 #            print("      DEBUG location =", location.offset,";",location.length)
