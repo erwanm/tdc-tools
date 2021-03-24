@@ -158,6 +158,9 @@ def process_medline(doc, count, output_files, first_year, last_year, output_dir,
             if year is None:
                 count["med_undef_year"] += 1
                 year = '0000'
+            else:
+                # as a precaution year is double-converted in order to solve rare error case " 2020 "
+                year = str(int(year))
         elif passage_type == 'abstract':
             abstract = passage.text
         else:
@@ -202,6 +205,9 @@ def process_pmc(doc, count, output_files, first_year, last_year, output_dir, fil
     if year is None:
         count["pmc_undef_year"] += 1
         year = '0000'
+    else:
+        # as a precaution year is double-converted in order to solve rare error case " 2020 "
+        year = str(int(year))
     if int(year) >= first_year and int(year) < last_year:
         count["pmc"] += 1
         fullid = pmid + "." + pmcid
