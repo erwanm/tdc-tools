@@ -156,7 +156,6 @@ def process_medline(doc, count, output_files, first_year, last_year, output_dir,
             title = passage.text
             year = passage.infons.get('year')
             if year is None:
-                count["med_undef_year"] += 1
                 year = '0000'
             else:
                 # as a precaution year is double-converted in order to solve rare error case " 2020 "
@@ -166,6 +165,8 @@ def process_medline(doc, count, output_files, first_year, last_year, output_dir,
         else:
             raise Exception("Bug: a Medline document must have only 'title' and 'abstract' as passage.")
     if int(year) >= first_year and int(year) < last_year:
+        if year == "0000": # this test is done after checking the year range in order to avoid counting this error in every batch
+            count["med_undef_year"] += 1
         count["medline"] += 1
         this_year_output = output_files["filtered-medline"].get(year)
         if this_year_output is None:
@@ -193,22 +194,24 @@ def process_pmc(doc, count, output_files, first_year, last_year, output_dir, fil
         raise Exception("Bug: a PMC document must have 'front' as type for the first passage.")
     pmid = doc.passages[0].infons.get('article-id_pmid')
     pmcid = doc.passages[0].infons.get('article-id_pmc')
-    if pmid is None or pmcid is None:
-        count["invalid_pmc_docs"] += 1
-        if pmid is None:
-            pmid="NOPMID"
-    if pmcid is not None:
-        if pmcid != doc_id: # sanity check
-            raise Exception("Invalid PMC document doc id '"+doc_id+"': document id does not match PMCID.")
+    if pmid is None:
+        pmid="NOPMID"
+    if pmcid is not None and pmcid != doc_id: # sanity check
+        raise Exception("Invalid PMC document doc id '"+doc_id+"': document id does not match PMCID.")
     title = doc.passages[0].text
     year = doc.passages[0].infons.get('year')
     if year is None:
-        count["pmc_undef_year"] += 1
         year = '0000'
     else:
         # as a precaution year is double-converted in order to solve rare error case " 2020 "
         year = str(int(year))
     if int(year) >= first_year and int(year) < last_year:
+        if year == "0000": # this test is done after checking the year range in order to avoid counting this error in every batch
+            count["pmc_undef_year"] += 1
+        if pmid == "NOPMID": # same reason: count only if within the year range of the current batch
+            count["invalid_pmc_pmid"] += 1
+        if pmcid is None:
+            count["invalid_pmc_pmcid"] += 1
         count["pmc"] += 1
         fullid = pmid + "." + pmcid
         this_year_output_art = output_files["pmc-articles"].get(year)
