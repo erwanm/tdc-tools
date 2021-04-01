@@ -105,11 +105,27 @@ for level in $levels; do
 	    echo "$y"
 	done | sort -u | while read year; do
 	    yearLS=$(echo "$all" | sed "s:REPLACE:$year\*:g")
-	    echo "ls $yearLS 2>/dev/null | python3 $DIR/get-frequency-from-doc-concept-matrix.py \"$fullOutDir/$year\" 2>\"$fullOutDir/$year.err\" "
-#	    ls $yearLS 2>/dev/null | python3 $DIR/get-frequency-from-doc-concept-matrix.py "$fullOutDir/$year"
+	    command="ls $yearLS 2>/dev/null | python3 $DIR/get-frequency-from-doc-concept-matrix.py \"$fullOutDir/$year\"" # 2>\"$fullOutDir/$year.err\""
+	    # use the following line to print the jobs instead of running
+#	    echo "$command"
+	    eval "$command"
+	    if [ $? -ne 0 ]; then
+		echo "Error with command:" 1>&2
+		echo "$command" 1>&2
+		exit 1
+	    fi
 	done
+	if [ $? -ne 0 ]; then
+	    exit 1
+	fi
 	
     done
+    if [ $? -ne 0 ]; then
+	exit 1
+    fi
     
 done
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 

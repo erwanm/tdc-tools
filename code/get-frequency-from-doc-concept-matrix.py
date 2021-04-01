@@ -146,7 +146,7 @@ indiv_multi = defaultdict(int)
 joint = defaultdict(lambda: defaultdict(int))
 for input_file in input_files:
     with open(input_file) as f:
-        print("DEBUG file = '"+input_file+"'",file=sys.stderr)
+#        print("DEBUG file = '"+input_file+"'",file=sys.stderr)
         for l in f:
             line = l.rstrip()
 #            print("DEBUG line = '"+line+"'",file=sys.stderr)
