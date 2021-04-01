@@ -61,9 +61,8 @@ for level in $levels; do
     fi
 
     for outDir in $outputDirs; do
-	echo "$level / $outDir"
-	d="$outputDir/$level/$outDir"
-	mkdir "$d"
+	fullOutDir="$outputDir/$level/$outDir"
+	mkdir "$fullOutDir"
 
 	if [ "$outDir" == "unfiltered-medline" ]; then
 	    if [ -z "$kdData" ]; then
@@ -90,24 +89,24 @@ for level in $levels; do
 
 	all=""
 	for inDir in $inDirs; do
-	    d="$inputDir/$level/$inDir"
-	    if [ ! -d "$d" ]; then
-		echo "Error: no dir '$d'" 1>&2
+	    fullInDir="$inputDir/$level/$inDir"
+	    if [ ! -d "$fullInDir" ]; then
+		echo "Error: no dir '$fullInDir'" 1>&2
 		exit 1
 	    else
-		all="$all $d/REPLACE"
+		all="$all $fullInDir/REPLACE"
 	    fi
 	done
+	echo "$level / $outDir: input dirs = '$all', output = $fullOutDir" 1>&2
 	allLS=$(echo "$all" | sed 's:REPLACE:*:g')
 	ls $allLS | while read f; do
 	    b=$(basename "$f")
 	    y=${b%%.*}
 	    echo "$y"
-	done | while read year; do
+	done | sort -u | while read year; do
 	    yearLS=$(echo "$all" | sed "s:REPLACE:$year\*:g")
-	    echo "ls $yearLS | python3 $DIR/get-frequency-from-doc-concept-matrix.py \"$d/$year\""
-	    ls $yearLS | python3 $DIR/get-frequency-from-doc-concept-matrix.py "$d/$year"
-	    exit 1
+	    echo "ls $yearLS 2>/dev/null | python3 $DIR/get-frequency-from-doc-concept-matrix.py \"$fullOutDir/$year\" 2>\"$fullOutDir/$year.err\" "
+#	    ls $yearLS 2>/dev/null | python3 $DIR/get-frequency-from-doc-concept-matrix.py "$fullOutDir/$year"
 	done
 	
     done

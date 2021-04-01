@@ -31,7 +31,8 @@ def usage(out):
     print("  line by document followed by the list of concepts in the document:",file=out)
     print("    <year> <doc id> <list of doc-concepts>",file=out)
     print("  Where <list of doc-concepts> contains a space separated list of strings '<concept id>"+OUTPUT_CONCEPT_FREQ_SEP+"<freq>'.",file=out)
-    print("    Note: the separator ':' can appear in <concept id> but not in <freq>.",file=out)
+    print("    Note1: the separator ':' can appear in <concept id> but not in <freq>.",file=out)
+    print("    Note2: in case the concept id contains a space, double quotes are added: \"<id>:<freq>\".",file=out)
     print("  <doc level> indicates which portion of a Medline/PMC entry is considered as a document:",file=out)
     print("    'doc', 'part', 'elem' or 'sent'",file=out)
     print("",file=out)
@@ -101,7 +102,12 @@ with open(input_file) as infile:
 
 outfile = open(output_file,"w")
 for doc_key,doc_map in docs.items():
-    concepts_list = [ concept+OUTPUT_CONCEPT_FREQ_SEP+str(freq) for concept,freq in doc_map.items() ]
+    concepts_list = list()
+    for concept,freq in doc_map.items():
+        s = concept+OUTPUT_CONCEPT_FREQ_SEP+str(freq)
+        if concept.find(" ") >= 0:
+            s = '"'+s+'"'
+        concepts_list.append(s)
     outfile.write("%s\t%s\t%s\n" % (year, doc_key, " ".join(concepts_list)) )
 
     

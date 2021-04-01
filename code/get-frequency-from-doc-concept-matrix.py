@@ -48,6 +48,41 @@ def usage(out):
     print("",file=out)
 
 
+def fix_spaces_between_quotes_if_any(l):
+    currentElem = None
+    res = list()
+#    print("DEBUG START", file=sys.stderr)
+    for e in l:
+#        print("  DEBUG elem='"+e+"'", file=sys.stderr)
+        if len(e) > 0:
+            if currentElem is None:
+                if e[0] == '"':
+                    if e[-1] == '"' and len(e)>1: # if len(e)==1 it's a single quote so opening (yes, an id starting with a space happens)
+                        res.append(e[1:-1])
+                    else:
+#                        print("  * opening", file=sys.stderr)
+                        currentElem = e[1:]
+                else:
+                    if e[-1] == '"':
+                        raise Exception("Error: closing quote does not match anything in ",l)
+                    else:
+                        res.append(e)
+            else:
+                if e[0] == '"':
+                    raise Exception("Error: opening quote not closed yet but new opening in ",l)
+                else:
+                    if e[-1] == '"':
+                        res.append(currentElem + e[:-1])
+#                        print("  * closing", file=sys.stderr)
+                        currentElem = None
+                    else:
+                        currentElem += e
+#        else:
+#           print("Warning: empty element in list "+"|".join(l),file=sys.stderr)
+    if currentElem is not None:
+        raise Exception("Error: opening quote not closed at the end in ", l)
+    return res
+                
 
 
 
@@ -111,6 +146,7 @@ indiv_multi = defaultdict(int)
 joint = defaultdict(lambda: defaultdict(int))
 for input_file in input_files:
     with open(input_file) as f:
+        print("DEBUG file = '"+input_file+"'",file=sys.stderr)
         for l in f:
             line = l.rstrip()
 #            print("DEBUG line = '"+line+"'",file=sys.stderr)
@@ -126,15 +162,21 @@ for input_file in input_files:
                 if year_doc != year:
                     raise Exception("Inconsistent year in '"+input_file+"': '"+line+"' (previously the year was "+str(year)+")") 
             doc_id = cols[1]
-            concepts_list = cols[2]
-            for concept_freq_str in concepts_list.split(" "):
+            concepts_list_str = cols[2]
+            concepts_list = fix_spaces_between_quotes_if_any(concepts_list_str.split(" "))
+            for concept_freq_str in concepts_list:
                 s = concept_freq_str.rfind(INPUT_CONCEPT_FREQ_SEP)
                 concept = concept_freq_str[:s]
                 freq = concept_freq_str[s+1:]
- #               print("DEBUG concept = '%s', freq = '%s'" % (concept, freq),file=sys.stderr )
+#                print("DEBUG concept_freq_str='%s', s=%d, concept = '%s', freq = '%s'" % (concept_freq_str, s, concept, freq),file=sys.stderr )
                 doc_set.add(concept)
                 if not joint_mode:
-                    indiv_multi[concept] += int(freq)
+                    try:
+                        indiv_multi[concept] += int(freq)
+                    except ValueError:
+                        print("File '"+input_file+"' line = '"+line+"'...", file=sys.stderr )
+                        print("DEBUG concept = '%s', freq = '%s'" % (concept, freq),file=sys.stderr )
+                        raise Exception("Error: Frequency not an int.")
             if joint_mode:
                 for c1 in doc_set:
                     c1_target = target_concepts is None or c1 in target_concepts
