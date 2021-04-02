@@ -14,6 +14,7 @@ PROG_NAME = "get-frequency-from-doc-concept-matrix.py"
 
   
 INPUT_CONCEPT_FREQ_SEP=":"
+SEPARATOR_CONCEPT_ID_TYPE = "@"
 
 def usage(out):
     print("Usage: ls <input files> | "+PROG_NAME+" [options] <output file> [target concepts file]",file=out)
@@ -38,13 +39,15 @@ def usage(out):
     print("  concepts in <target concepts file> (one by line). In this case <output file> contains:",file=out)
     print("    <year> <concept1> <concept2> <joint freq>",file=out)
     print("    Note 1: the joint probability is <joint freq> / <nb docs> (obtained from the indiv .total file)",file=out)
-    print("    Note 2: evry pair of concept A,B is written only once using lexicographic order (concept1<concept2).",file=out)
+    print("    Note 2: every pair of concept A,B is written only once using lexicographic order (concept1<concept2).",file=out)
     print("",file=out)
     print("  Options")
     print("    -h: print this help message.",file=out)
     print("    -j: joint frequency for all pairs of concepts where at least one concept belongs to the",file=out)
     print("        list of targets.",file=out)
     print("    -J: joint frequency only for pairs of concepts where both concepts belong to the list of targets.",file=out)
+    print("    -p: target concepts provided without type are matched against PTC formatted concepts with any type,",file=out)
+    print("        for example target 'MESH:D1234567' matches 'MESH:D1234567@XXX' and 'MESH:D1234567@YYY'.",file=out)
     print("",file=out)
 
 
@@ -84,14 +87,27 @@ def fix_spaces_between_quotes_if_any(l):
     return res
                 
 
+# returns true iff doc_concept belongs to target_concepts, modulo type depending on ptc_match_any_type
+def concept_match(doc_concept, target_concepts, ptc_match_any_type):
+    if ptc_match_any_type:
+        sep_pos = doc_concept.rfind(SEPARATOR_CONCEPT_ID_TYPE)
+        if sep_pos == -1:
+            concept_id = doc_concept
+        else:
+            concept_id = doc_concept[0:sep_pos]
+        return concept_id in target_concepts
+    else:
+        return doc_concept in target_concepts
+
 
 
 # main
 
 joint_mode = False
 joint_both_target = False
+ptc_match_any_type = False
 try:
-    opts, args = getopt.getopt(sys.argv[1:],"hjJ")
+    opts, args = getopt.getopt(sys.argv[1:],"hjJp")
 except getopt.GetoptError:
     usage(sys.stderr)
     sys.exit(2)
@@ -104,6 +120,8 @@ for opt, arg in opts:
     elif opt == "-J":
         joint_mode = True
         joint_both_target = True
+    elif opt == "-p":
+        ptc_match_any_type = True
 #         outputfile = arg
 
 #print("debug args after options: ",args)
@@ -168,27 +186,31 @@ for input_file in input_files:
                 s = concept_freq_str.rfind(INPUT_CONCEPT_FREQ_SEP)
                 concept = concept_freq_str[:s]
                 freq = concept_freq_str[s+1:]
-#                print("DEBUG concept_freq_str='%s', s=%d, concept = '%s', freq = '%s'" % (concept_freq_str, s, concept, freq),file=sys.stderr )
+                # print("DEBUG concept_freq_str='%s', s=%d, concept = '%s', freq = '%s'" % (concept_freq_str, s, concept, freq),file=sys.stderr )
+                # even if not a target, the concept iq always added to the doc set in case of joint mode
                 doc_set.add(concept)
                 if not joint_mode:
-                    try:
-                        indiv_multi[concept] += int(freq)
-                    except ValueError:
-                        print("File '"+input_file+"' line = '"+line+"'...", file=sys.stderr )
-                        print("DEBUG concept = '%s', freq = '%s'" % (concept, freq),file=sys.stderr )
-                        raise Exception("Error: Frequency not an int.")
+                    # update multi count
+                    if target_concepts is None or concept_match(concept, target_concepts, ptc_match_any_type):
+                        try:
+                            indiv_multi[concept] += int(freq)
+                        except ValueError:
+                            print("File '"+input_file+"' line = '"+line+"'...", file=sys.stderr )
+                            print("DEBUG concept = '%s', freq = '%s'" % (concept, freq),file=sys.stderr )
+                            raise Exception("Error: Frequency not an int.")
             if joint_mode:
                 for c1 in doc_set:
-                    c1_target = target_concepts is None or c1 in target_concepts
+                    c1_target = target_concepts is None or concept_match(c1, target_concepts, ptc_match_any_type)
                     if not joint_both_target or c1_target:
                         for c2 in doc_set:
                             if c1 < c2:
-                                c2_target = target_concepts is None or c2 in target_concepts
+                                c2_target = target_concepts is None or concept_match(c2, target_concepts, ptc_match_any_type)
                                 if (targetsFile is None) or (joint_both_target and c1_target and c2_target) or (not joint_both_target and (c1_target or c2_target)):
                                     joint[c1][c2] += 1
             else:
                 for c in doc_set:
-                    indiv_set[c] += 1 
+                    if target_concepts is None or concept_match(c, target_concepts, ptc_match_any_type):
+                        indiv_set[c] += 1 
 
 with open(output_file, "w") as outfile:
     if joint_mode:
