@@ -9,6 +9,24 @@ kdDirs="abstracts+articles/abstracts abstracts+articles/articles unfiltered-medl
 outputDirs="unfiltered-medline pmc-articles abstracts+articles"
 kdData=""
 
+
+function usage {
+    echo
+    echo "$progName: usage: $progName <input dcm dir> <output dir> [target concepts]"
+    echo
+    echo "  This script runs get-frequency-from-doc-concept-matrix.py for every year,"
+    echo "  every level and every 'data view'. "
+    echo "  It deals automatically with the different set of input directories."
+    echo
+    echo "  See details in get-frequency-from-doc-concept-matrix.py."
+    echo
+    echo "  Options:"
+    echo "    -h: print this help message."
+    echo "    -j, -J, -p: see details in get-frequency-from-doc-concept-matrix.py."
+    echo ""
+}
+
+
 function checkDirs {
     topDir="$1"
     dirs="$2"
@@ -21,16 +39,29 @@ function checkDirs {
 }
 
 
-if [ $# -ne 2 ]; then
-    echo "Usage: <input dir> <output dir>" 1>&2
+options=""
+while getopts 'hjJp' option ; do
+    case $option in
+	"h" ) usage
+	          exit 0;;
+	"j" | "J" | "p" )  options="$options -$option";;
+        "?" )
+            echo "Error, unknow option." 1>&2
+            usage 1>&2
+	        exit 1
+    esac
+done
+shift $(($OPTIND - 1)) # skip options already processed above
+if [ $# -ne 2 ] && [ $# -ne 3 ]; then
+    echo "Error: 2 or 3 arguments expected." 1>&2
     echo 1>&2
-    echo "  Reads data by year from all the input dirs provided."
+    usage 1>&2
     exit 1
 fi
 
-
 inputDir="$1"
 outputDir="$2"
+targetsFile="$3"
 
 if [ -d "$outputDir" ]; then
     echo "Warning: $outputDir already exists, possible previous content" 1>&2
@@ -105,7 +136,7 @@ for level in $levels; do
 	    echo "$y"
 	done | sort -u | while read year; do
 	    yearLS=$(echo "$all" | sed "s:REPLACE:$year\*:g")
-	    command="ls $yearLS 2>/dev/null | python3 $DIR/get-frequency-from-doc-concept-matrix.py \"$fullOutDir/$year\"" # 2>\"$fullOutDir/$year.err\""
+	    command="ls $yearLS 2>/dev/null | python3 $DIR/get-frequency-from-doc-concept-matrix.py $options \"$fullOutDir/$year\" $targetsFile" # 2>\"$fullOutDir/$year.err\""
 	    # use the following line to print the jobs instead of running
 #	    echo "$command"
 	    eval "$command"
