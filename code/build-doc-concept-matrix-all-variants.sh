@@ -16,8 +16,19 @@ function checkDirs {
     return 0
 }
 
+optKD=""
+if [ "$1" == "-k" ]; then
+    optKD="-k"
+    echo "Info: KD option ON." 1>&2
+    shift
+else
+    echo "Info: KD option OFF." 1>&2
+fi
+
 if [ $# -ne 2 ]; then
-    echo "Usage: <input PTC TDC dir> <output dir>" 1>&2
+    echo "Usage: [-k] <input TDC dir> <output dir>" 1>&2
+    echo "" 1>&2
+    echo "   -k: multiple concepts separated by comma (KD data format)" 1>&2
     exit 1
 fi
 
@@ -58,7 +69,7 @@ for d in doc sent; do
 	ls "$inputDir"/$c/*cuis | while read f ; do   
 	    b=$(basename "$f")
 	    y=${b%%.*}
-	    python3 "$DIR"/build-doc-concept-matrix.py "$y" "$d" "$f" "$outputDir/by-$d/$cOUT/${b%.cuis}"
+	    python3 "$DIR"/build-doc-concept-matrix.py $optKD "$y" "$d" "$f" "$outputDir/by-$d/$cOUT/${b%.cuis}"
 	done
     done
 done
