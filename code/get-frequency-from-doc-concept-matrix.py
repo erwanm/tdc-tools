@@ -34,6 +34,7 @@ def usage(out):
     print("    Notes:", file=out)
     print("      - the regular 'doc as set' probability is <doc frequency> / <nb docs>",file=out)
     print("      - the 'doc as multiset' probability is <occurences frequency> / <nb concepts occurrences>",file=out)
+    print("      - the total file always counts all the concepts, not only target ones.",file=out)
     print("",file=out)
     print("  Use option -j <target concepts file> to calculate the joint frequency for the list of target",file=out)
     print("  concepts in <target concepts file> (one by line). In this case <output file> contains:",file=out)
@@ -159,6 +160,8 @@ if targetsFile is not None:
 # Step 3: counting
 year = None
 nb_docs = 0
+total_unique_concepts = set()
+total_multi_concepts = 0
 indiv_set = defaultdict(int)
 indiv_multi = defaultdict(int)
 joint = defaultdict(lambda: defaultdict(int))
@@ -191,13 +194,15 @@ for input_file in input_files:
                 doc_set.add(concept)
                 if not joint_mode:
                     # update multi count
-                    if target_concepts is None or concept_match(concept, target_concepts, ptc_match_any_type):
-                        try:
+                    try:
+                        # total: count every concept, whether target or not
+                        total_multi_concepts += int(freq)
+                        if target_concepts is None or concept_match(concept, target_concepts, ptc_match_any_type):
                             indiv_multi[concept] += int(freq)
-                        except ValueError:
-                            print("File '"+input_file+"' line = '"+line+"'...", file=sys.stderr )
-                            print("DEBUG concept = '%s', freq = '%s'" % (concept, freq),file=sys.stderr )
-                            raise Exception("Error: Frequency not an int.")
+                    except ValueError:
+                        print("File '"+input_file+"' line = '"+line+"'...", file=sys.stderr )
+                        print("DEBUG concept = '%s', freq = '%s'" % (concept, freq),file=sys.stderr )
+                        raise Exception("Error: Frequency not an int.")
             if joint_mode:
                 for c1 in doc_set:
                     c1_target = target_concepts is None or concept_match(c1, target_concepts, ptc_match_any_type)
@@ -209,6 +214,7 @@ for input_file in input_files:
                                     joint[c1][c2] += 1
             else:
                 for c in doc_set:
+                    total_unique_concepts.add(c)
                     if target_concepts is None or concept_match(c, target_concepts, ptc_match_any_type):
                         indiv_set[c] += 1 
 
@@ -218,11 +224,9 @@ with open(output_file, "w") as outfile:
             for c2, joint_freq in c1_map.items():
                 outfile.write("%s\t%s\t%s\t%d\n" % (year, c1, c2, joint_freq ) )
     else:
-        total_multi_concepts = 0
         for concept, indiv_freq in indiv_set.items():
             multi_freq = indiv_multi[concept]
-            total_multi_concepts += multi_freq
             outfile.write("%s\t%s\t%d\t%d\n" % (year, concept, indiv_freq, multi_freq ) )
         with open(output_file+".total", "w") as outfile_total:
-            outfile_total.write("%s\t%d\t%d\t%d\n" % (year, len(indiv_set.keys()), nb_docs, total_multi_concepts) )
+            outfile_total.write("%s\t%d\t%d\t%d\n" % (year, len(total_unique_concepts), nb_docs, total_multi_concepts) )
         

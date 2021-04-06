@@ -23,6 +23,7 @@ function usage {
     echo "  Options:"
     echo "    -h: print this help message."
     echo "    -j, -J, -p: see details in get-frequency-from-doc-concept-matrix.py."
+    echo "    -w write commands to STDOUT instead of executing them"
     echo ""
 }
 
@@ -40,11 +41,13 @@ function checkDirs {
 
 
 options=""
-while getopts 'hjJp' option ; do
+printCommands=""
+while getopts 'hjJpw' option ; do
     case $option in
 	"h" ) usage
 	          exit 0;;
 	"j" | "J" | "p" )  options="$options -$option";;
+	"w" ) printCommands=1;;
         "?" )
             echo "Error, unknow option." 1>&2
             usage 1>&2
@@ -136,14 +139,16 @@ for level in $levels; do
 	    echo "$y"
 	done | sort -u | while read year; do
 	    yearLS=$(echo "$all" | sed "s:REPLACE:$year\*:g")
-	    command="ls $yearLS 2>/dev/null | python3 $DIR/get-frequency-from-doc-concept-matrix.py $options \"$fullOutDir/$year\" $targetsFile" # 2>\"$fullOutDir/$year.err\""
-	    # use the following line to print the jobs instead of running
-#	    echo "$command"
-	    eval "$command"
-	    if [ $? -ne 0 ]; then
-		echo "Error with command:" 1>&2
-		echo "$command" 1>&2
-		exit 1
+	    command="ls $yearLS 2>/dev/null | python3 $DIR/get-frequency-from-doc-concept-matrix.py $options \"$fullOutDir/$year\" $targetsFile 2>\"$fullOutDir/$year.err\"" 
+	    if [ -z "$printCommands" ]; then
+		eval "$command"
+		if [ $? -ne 0 ]; then
+		    echo "Error with command:" 1>&2
+		    echo "$command" 1>&2
+		    exit 1
+		fi
+	    else
+		echo "$command"
 	    fi
 	done
 	if [ $? -ne 0 ]; then
