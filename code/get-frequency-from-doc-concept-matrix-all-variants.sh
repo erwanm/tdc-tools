@@ -2,6 +2,8 @@
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
+progName="get-frequency-from-doc-concept-matrix-all-variants.sh"
+
 levels="by-doc by-sent"
 
 processDirs="filtered-medline pmc-abstracts pmc-articles"
