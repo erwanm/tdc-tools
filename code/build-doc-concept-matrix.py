@@ -25,14 +25,17 @@ INPUT_MULTI_CONCEPT_SEP=","
 OUTPUT_CONCEPT_FREQ_SEP=":"
 
 def usage(out):
-    print("Usage: "+PROG_NAME+" [options] <year> <doc level> <input .cuis file> <output .dcm file>",file=out)
+    print("Usage: "+PROG_NAME+" [options] <year> <doc level> <input prefix> <output .dcm file>",file=out)
     print("",file=out)
-    print("  Reads a TDC .cuis file and writes the document-concept matrix file, which contains one",file=out)
-    print("  line by document followed by the list of concepts in the document:",file=out)
-    print("    <year> <doc id> <list of doc-concepts>",file=out)
+    print("  Reads  TDC files <input prefix>.raw and <input prefix>.cuis file and writes the",file=out)
+    print("   document-concept matrix file, which contains one line by document followed by the list",file=out)
+    print("   of concepts in the document:",file=out)
+    print("     <year> <doc id> <list of doc-concepts>",file=out)
     print("  Where <list of doc-concepts> contains a space separated list of strings '<concept id>"+OUTPUT_CONCEPT_FREQ_SEP+"<freq>'.",file=out)
     print("    Note1: the separator ':' can appear in <concept id> but not in <freq>.",file=out)
     print("    Note2: in case the concept id contains a space, double quotes are added: \"<id>:<freq>\".",file=out)
+    print("    Note3: the .raw file is used to get all the PMIDs (even for empty documents),",file=out)
+    print("           but only if level='doc' (it wouldn't make sense to add empty sentences).",file=out)
     print("  <doc level> indicates which portion of a Medline/PMC entry is considered as a document:",file=out)
     print("    'doc', 'part', 'elem' or 'sent'",file=out)
     print("",file=out)
@@ -82,13 +85,24 @@ if len(args) != 4:
 
 year = args[0]
 doc_level = args[1]
-input_file = args[2]
+input_prefix = args[2]
 output_file = args[3]
 
 
 #docs = defaultdict(list)
 docs = defaultdict(lambda: defaultdict(int))
 
+# 1) read .raw file to collect the pmids only if level='doc'
+if doc_level == "doc":
+    input_file = input_prefix+".raw"
+    with open(input_file) as infile:
+        for line in infile:
+            cols = line.split("\t")
+            key = cols[COL_PMID]
+            docs[key] = defaultdict(int)
+
+# 2) read .cuis file
+input_file = input_prefix+".cuis"
 with open(input_file) as infile:
     for line in infile:
         cols = line.split("\t")

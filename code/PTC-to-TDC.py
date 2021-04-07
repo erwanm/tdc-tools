@@ -255,8 +255,8 @@ def process_pmc(doc, count, output_files, first_year, last_year, output_dir, fil
         if undef_passage_type:
             count["pmc_contains_undef_passage_type"] += 1
         # .raw file
-        this_year_output_abs[2][0].write("%s\t%s\t%s\t%s\n" % (pmid, year, title, abstract) )
-        this_year_output_art[2][0].write("%s\t%s\t%s\t%s\t%s\n" % (pmid, year, title, abstract,  " . ".join(full_content)) )
+        this_year_output_abs[2][0].write("%s\t%s\t%s\t%s\n" % (fullid, year, title, abstract) )
+        this_year_output_art[2][0].write("%s\t%s\t%s\t%s\t%s\n" % (fullid, year, title, abstract,  " . ".join(full_content)) )
 
 
 
