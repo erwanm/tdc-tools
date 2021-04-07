@@ -1,7 +1,6 @@
 #!/bin/bash
 
-
-script="/home/moreaue/brain-mend/pybioc/PTC-to-TDC.py"
+DIR="$( cd "$( dirname "$0" )" && pwd )"
 yMax=2021
 
 function writeJob {
@@ -20,7 +19,7 @@ function writeJob {
     echo "ptcDir=\$(mktemp -d --tmpdir=/tmp \"ptc-to-tdc.XXXXXXXX\")"
     echo "squashfuse $sqsh \$ptcDir"
     echo "export PROOT_NO_SECCOMP=1"
-    echo "/home/moreaue/udocker run -v ~ -v /tmp pybioc python3 $script \"\$ptcDir/BioCXML\" \"$targetDir\" $minYear $maxYear >$minYear-$maxYear.out 2>$minYear-$maxYear.err"
+    echo "/home/moreaue/udocker run -v ~ -v /tmp pybioc python3 $DIR/PTC-to-TDC.py \"\$ptcDir/BioCXML\" \"$targetDir\" $minYear $maxYear >$minYear-$maxYear.out 2>$minYear-$maxYear.err"
     echo "fusermount -u \$ptcDir"
     echo "rmdir \$ptcDir"    
 }

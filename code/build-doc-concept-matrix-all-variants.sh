@@ -69,7 +69,7 @@ for d in doc sent; do
 	ls "$inputDir"/$c/*cuis | while read f ; do   
 	    b=$(basename "$f")
 	    y=${b%%.*}
-	    python3 "$DIR"/build-doc-concept-matrix.py $optKD "$y" "$d" "$f" "$outputDir/by-$d/$cOUT/${b%.cuis}"
+	    python3 "$DIR"/build-doc-concept-matrix.py $optKD "$y" "$d" "${f%.cuis}" "$outputDir/by-$d/$cOUT/${b%.cuis}"
 	done
     done
 done
