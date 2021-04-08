@@ -16,6 +16,34 @@ function checkDirs {
     return 0
 }
 
+
+# patch for fixing invalid year such as ' 2020 ' (PTC)  or '02017' (KD)
+# test cases:
+# x=" 2020 "
+# fixInvalidYear "$x"
+# x="02017"
+# fixInvalidYear "$x"
+# x="00000"
+# fixInvalidYear "$x"
+# x="00324"
+# fixInvalidYear "$x"
+# x="1234"
+# fixInvalidYear "$x"
+function fixInvalidYear {
+    year0=$(echo $1)
+    if [ "${#year0}" -ne 4 ]; then
+	year1=$(echo "$year0" | sed 's/^0*//')
+	if [ -z "$year1" ]; then 
+	    echo "0000"
+	else
+	    printf "%04d\n"  "$year1"
+	fi
+    else
+	echo "$year0"
+    fi
+}
+
+
 optKD=""
 if [ "$1" == "-k" ]; then
     optKD="-k"
@@ -68,9 +96,27 @@ for d in doc sent; do
 	mkdir -p "$outputDir/by-$d/$cOUT"
 	ls "$inputDir"/$c/*cuis | while read f ; do   
 	    b=$(basename "$f")
-	    y=${b%%.*}
+	    y0=${b%%.*}
+	    y=$(fixInvalidYear "$y0")
+	    # patch for invalid year needed for the next steps to correctly read the year from the filename 
+	    # this is not ideal since it breaks the principle of keeping the same filename, but it's better than
+	    # keeping the invalid year which causes bugs everywhere.
+	    # Important: the original invalid year is kept additionally to the corrected version in order to avoid
+	    # writing twice to the same output file (i.e. overwriting)
+	    # ideally these cases should be fixed in the steps before.
+	    if [ "$y" != "$y0" ]; then  
+		b="$y.$b"
+	    fi
 	    python3 "$DIR"/build-doc-concept-matrix.py $optKD "$y" "$d" "${f%.cuis}" "$outputDir/by-$d/$cOUT/${b%.cuis}"
+	    if [ $? -ne 0 ]; then
+		exit 1
+	    fi
 	done
+	if [ $? -ne 0 ]; then
+	    exit 1
+	fi
     done
+    if [ $? -ne 0 ]; then
+	exit 1
+    fi
 done
-
