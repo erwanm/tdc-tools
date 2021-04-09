@@ -169,8 +169,8 @@ for input_file in input_files:
     with open(input_file) as f:
 #        print("DEBUG file = '"+input_file+"'",file=sys.stderr)
         for l in f:
-            line = l.rstrip()
-#            print("DEBUG line = '"+line+"'",file=sys.stderr)
+            # note: removing the line break '\n' but not any '\t', as the last column (list of <concept>:<freq> pairs) might be empty
+            line = l.rstrip("\n")
             cols = line.split('\t')
             nb_docs += 1
             doc_set = set()
