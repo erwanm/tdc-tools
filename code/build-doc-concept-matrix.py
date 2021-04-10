@@ -95,7 +95,8 @@ docs = defaultdict(lambda: defaultdict(int))
 # 1) read .raw file to collect the pmids only if level='doc'
 if doc_level == "doc":
     input_file = input_prefix+".raw"
-    with open(input_file) as infile:
+    # the newline char must be '\n' because the KD raw text sometimes contains '\r` in the middle of the text
+    with open(input_file, newline='\n') as infile:
         for line in infile:
             cols = line.split("\t")
             key = cols[COL_PMID]
