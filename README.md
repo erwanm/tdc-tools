@@ -13,7 +13,7 @@ Most of the biomedical literature is available for download from [Medline](https
 * Year-based format to facilitate analysis across time or filtering by range of years
 * Preserves link of a concept with its source sentence/document (this is possible but not implemented) 
 * Main scripts:
-    * parse PTC to TDC
+    * [parse PTC to TDC](#ii-converting-ptc-data-to-tdc-format)
     * convert TDC to doc-concept matrix format
     * count individual and joint frequency by concept
   
