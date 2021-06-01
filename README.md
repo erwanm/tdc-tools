@@ -13,9 +13,10 @@ Most of the biomedical literature is available for download from [Medline](https
 * Year-based format to facilitate analysis across time or filtering by range of years
 * Preserves link of a concept with its source sentence/document (this is possible but not implemented) 
 * Main scripts:
-    * [parse PTC to TDC](#ii-converting-ptc-data-to-tdc-format)
-    * convert TDC to doc-concept matrix format
-    * count individual and joint frequency by concept
+    * [Parse PTC to TDC](#ii-converting-ptc-data-to-tdc-format)
+    * [Generate the doc-concept matrix](#iii-generating-doc-concept-matrix-data)
+    * [Collect individual frequency by concept](#iv-collecting-individual-frequency-by-concept)
+    * [Collect joint frequency by concept](#v-collecting-joint-frequency-by-pairs-of-concepts)
   
 
 
@@ -179,7 +180,7 @@ mksquashfs PTC2021-TDC PTC2021-TDC.sqsh -comp xz
 
 
 
-# II. Generating doc-concept matrix data
+# III. Generating doc-concept matrix data
 
 ## Introduction
 
@@ -324,7 +325,7 @@ For several data dirs:
 ../tdc-tools/code/collect-data-stats.sh PTC.concept-freq/ KD.concept-freq >18-contrast-method-experiments/global-stats.tsv
 ```
 
-# Collecting joint frequency by pairs of concepts 
+# V. Collecting joint frequency by pairs of concepts
 
 * Goal: count cooccurrences for pairs of concepts A B.
 * It is highly recommended to provide a list of target concepts in order to avoid the massive number of pairs resulting from the cartesian product of all the concepts.
