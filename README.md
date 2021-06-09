@@ -356,7 +356,7 @@ In the examples below a list of 10 target concepts is used.
 Running all the tasks at once:
 
 ```
-../tdc-tools/code/get-frequency-from-doc-concept-matrix-all-variants.py -p -j PTC.dcm/ PTC.joint-targets 18-contrast-method-experiments/PTC.targets
+../tdc-tools/code/get-frequency-from-doc-concept-matrix-all-variants.sh -p -j PTC.dcm/ PTC.joint-targets 18-contrast-method-experiments/PTC.targets
 
 real    365m33.960s
 user    359m29.992s
@@ -371,7 +371,7 @@ Printing the tasks for parallel execution:
 
 ```
 rm -f KD.joint-targets
-./tdc-tools/code/get-frequency-from-doc-concept-matrix-all-variants.py -w -j KD.dcm/ KD.joint-targets 18-contrast-method-experiments/KD.targets >tasks
+./tdc-tools/code/get-frequency-from-doc-concept-matrix-all-variants.sh -w -j KD.dcm/ KD.joint-targets 18-contrast-method-experiments/KD.targets >tasks
 mkdir jobs
 split -a 4 -d -l 1 tasks jobs/job.
 for f in jobs/job.*; do echo -e '#!/bin/bash\n#SBATCH -p compute\n' > $f.sh; cat "$f" >> "$f.sh"; done
