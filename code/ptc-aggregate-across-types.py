@@ -28,7 +28,7 @@ def usage(out):
     print("  Options:")
     print("    -h: print this help message.",file=out)
     print("    -t: keep list of types after aggregating; possible only with a single concept column.",file=out)
-    print("    -c: <concepts column(s)> default = "+CONCEPT_COLS,file=out)
+    print("    -c: <concepts column(s)> default = "+CONCEPTS_COLS,file=out)
     print("    -j: joint freq file -> concept cols = 1,2; freq cols = 3 ",file=out)
     print("",file=out)
 

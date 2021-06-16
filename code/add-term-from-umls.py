@@ -7,7 +7,6 @@ from collections import defaultdict
 #import scispacy
 import sys, getopt
 
-######################### TODO decide what should happen when multiple groups
 
 PROG_NAME = "add-term-from-umls.py"
 
@@ -46,11 +45,11 @@ OUTPUT_GROUP_SEP=" "
 
 
 def usage(out):
-    print("Usage: ls <input files> | "+PROG_NAME+" [options] <UMLS dir> <output prefix> ",file=out)
+    print("Usage: ls <input files> | "+PROG_NAME+" [options] <UMLS dir> <output suffix> ",file=out)
     print("",file=out)
     print("  Reads a list of input tsv files with a concept id column (either a UMLS CUI id or a Mesh id)",file=out)
     print("  and maps the id to a term using the UMLS data. For each input file <f> an output file ",file=out)
-    print("  <output prefix><f> is created with an additional term column. Any output directory must",file=out)
+    print("  <f><output suffix> is created with an additional term column. Any output directory must",file=out)
     print("  have been created beforehand.",file=out)
     print("  <UMLS dir> is the UMLS metathesaurus data, it must contain RRF files: <UMLS dir>/META/*.RRF",file=out)
     print("  Notes:",file=out)
@@ -66,7 +65,7 @@ def usage(out):
     print("       prefix 'MESH:'. Both the category and the prefix are removed. Implies '-m'.",file=out)
     print("    -g <UMLS sem groups file> add 'semantic group' column using UMLS group hierarchy which",file=out)
     print("       can be downloaded at https://lhncbc.nlm.nih.gov/semanticnetwork/download/SemGroups.txt",file=out)
-    print("    -G add 'semantic group' column using PTC annotated type (requires PTC input; implies -p)",file=out)
+    print("    -G add 'semantic group' column using PTC annotated type (requires PTC input; implies -p and -m)",file=out)
     print("",file=out)
 
 
@@ -96,6 +95,7 @@ for opt, arg in opts:
     elif opt == '-G':
         ADD_GROUP_COL = True
         PTC_INPUT = True
+        USE_MESH_IDS = True
         USE_PTC_AS_GROUP_COL = True
 
 #print("debug args after options: ",args)
@@ -105,7 +105,7 @@ if len(args) != 2:
     sys.exit(2)
 
 umlsDir = args[0]
-outputPrefix = args[1]
+outputSuffix = args[1]
 
 input_files = [ f.rstrip() for f in sys.stdin ]
 for filename in input_files:
@@ -121,13 +121,13 @@ with open(f) as infile:
     for line in infile:
         cols = line.rstrip().split(UMLS_SEP)
         if cols[UMLS_COL_LANG] in UMLS_LANG_FILTER_VAL:                                     # filter language
-            if cols[UMLS_COL_PREFERED] == 'Y':                                              # store only if prefered term 
-                cui = cols[UMLS_COL_CUI]
-                if umls_cui_prefered_term.get(cui) is None:                                     # store only first prefered term
-                    umls_cui_prefered_term[cui] = cols[UMLS_COL_TERM]
+            cui = cols[UMLS_COL_CUI]
+            if cols[UMLS_COL_PREFERED] == 'Y' and umls_cui_prefered_term.get(cui) is None:  # store only if prefered term, and only first found 
+                umls_cui_prefered_term[cui] = cols[UMLS_COL_TERM]
             if USE_MESH_IDS and cols[UMLS_COL_SOURCE] == UMLS_MESH_SOURCE_FILTER_VAL:       # store all the CUIs corresponding to this Mesh
                 umls_mesh_to_cui[cols[UMLS_COL_MESH_ID]].append(cui)
-
+#                if cols[UMLS_COL_MESH_ID] == 'D000690':
+#                    print("DEBUG: ",cols[UMLS_COL_MESH_ID],":",cui, " - term = ",cols[UMLS_COL_TERM])
 
 umls_group_fine_to_coarse = {}
 groups_by_cui = defaultdict(set)
@@ -151,7 +151,7 @@ if umlsGroupFile is not None:
 
 print("INFO: Processing input files...")
 for input_file in input_files:
-    with open(outputPrefix+input_file,"w") as outfile:
+    with open(input_file+outputSuffix,"w") as outfile:
         with open(input_file) as infile:
             for line in infile:
                 cols = line.rstrip().split('\t')
@@ -161,6 +161,8 @@ for input_file in input_files:
                     if sep_pos != -1:
                         ptc_category = concept_id[sep_pos+1:]
                         concept_id = concept_id[0:sep_pos]
+                    else:
+                        raise Exception("let's see:",concept_id)
                     if concept_id[:5] == 'MESH:':
                         is_mesh = True
                         concept_id = concept_id[5:]
@@ -170,10 +172,11 @@ for input_file in input_files:
                 term = None
                 if USE_MESH_IDS:
                     cui_list = umls_mesh_to_cui[concept_id]
-#                    print("DEBUG A: ",concept_id, "...",cui_list)
                     if len(cui_list)>0:
                         # just picking the first matched cui
                         term = umls_cui_prefered_term[cui_list[0]]
+#                    if concept_id == 'D000690':
+#                        print("DEBUG A: ",concept_id, "...",cui_list," term = ", term )
                 else:
                     term = umls_cui_prefered_term.get(concept_id)
                 if term is None:

@@ -12,6 +12,9 @@ import sys, getopt
 
 PROG_NAME = "classify-cooccurrences-by-target.py"
 
+
+
+PTC_INPUT = False
 TARGETS_FILENAME = 'targets.tsv'  
 INPUT_CONCEPT_FREQ_SEP=":"
 SEPARATOR_CONCEPT_ID_TYPE = "@"
@@ -35,8 +38,15 @@ def usage(out):
     print("  Options")
     print("    -h: print this help message.",file=out)
     print("    -t <targets filename>: filename for the targets output; default: '"+TARGETS_FILENAME+"'",file=out)
+    print("    -p PTC input: remove MESH prefix from <joint freq file> concept ids.",file=out)
     print("",file=out)
 
+
+def remove_mesh_prefix(s):
+    if s[0:5] == "MESH:":
+        return s[5:]
+    else:
+        return s
 
 def write_cooc_to_target_file(out_file, this_concept, this_concept_info, joint_freq):
     if out_file is None:
@@ -47,7 +57,7 @@ def write_cooc_to_target_file(out_file, this_concept, this_concept_info, joint_f
 # main
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:],"ht:")
+    opts, args = getopt.getopt(sys.argv[1:],"ht:p")
 except getopt.GetoptError:
     usage(sys.stderr)
     sys.exit(2)
@@ -57,7 +67,8 @@ for opt, arg in opts:
         sys.exit()
     elif opt == "-t":
         TARGETS_FILENAME = arg
-
+    elif opt == "-p":
+        PTC_INPUT = True
 #print("debug args after options: ",args)
 
 if len(args) != 3:
@@ -94,24 +105,35 @@ with open(f,"w") as out_file:
         ft = join(output_dir, target)
         targets_files[target] = open(ft,"w")
 
-
-coocs_by_target = defaultdict(lambda: defaultdict(int))
+nb_total = 0
+nb_no_target = 0
 with open(joint_file) as infile:
     for line in infile:
+        nb_total += 1
         cols = line.rstrip('\n').split('\t')
         c1 = cols[0]
         c2 = cols[1]
+        if PTC_INPUT:
+            c1 = remove_mesh_prefix(c1)
+            c2 = remove_mesh_prefix(c2)
         freq = cols[2]
         c1_info = concept_info.get(c1)
         c2_info = concept_info.get(c2)
+        at_least_one_target = False
         if c1 in target_concepts:
+            at_least_one_target = True
             if c2_info is None:
                 raise Exception("Error: cannot find concept '"+c2+"' in '"+indiv_file+"'")
             write_cooc_to_target_file(targets_files[c1], c2, c2_info,freq)
         if c2 in target_concepts:
+            at_least_one_target = True
             if c1_info is None:
                 raise Exception("Error: cannot find concept '"+c1+"' in '"+indiv_file+"'")
             write_cooc_to_target_file(targets_files[c2], c1, c1_info,freq)
+        if not at_least_one_target:
+            nb_no_target += 1
+if nb_no_target > 0:
+    print("Warning: no target found for %d joint pairs of concepts out of %d." % (nb_no_target, nb_total) ,file=sys.stderr)
 
 
 for target, f in targets_files.items():
