@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import bioc
 import sys
 from os import listdir, mkdir
