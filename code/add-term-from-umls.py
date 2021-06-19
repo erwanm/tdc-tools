@@ -36,6 +36,7 @@ UMLS_SEP = '|'
 UMLS_MAIN_FILE = "MRCONSO.RRF"
 UMLS_GROUP_FILE = "MRSTY.RRF"
 
+FILTER_LANG = False
 ADD_GROUP_COL = False
 PTC_INPUT = False
 USE_MESH_IDS = False
@@ -68,6 +69,9 @@ def usage(out):
     print("    -g <UMLS sem groups file> add 'semantic group' column using UMLS group hierarchy which",file=out)
     print("       can be downloaded at https://lhncbc.nlm.nih.gov/semanticnetwork/download/SemGroups.txt",file=out)
     print("    -G add 'semantic group' column using PTC annotated type (requires PTC input; implies -p and -m)",file=out)
+    print("    -l filter only English language terms. This can be produce 'NA' terms if a concept does ",file=out)
+    print("       not have any English term (this is rare but it happens). By default English is prefered")
+    print("       but non-English is used if no English term is found.",file=out)
     print("",file=out)
 
 
@@ -76,7 +80,7 @@ def usage(out):
 
 umlsGroupFile = None
 try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:mpg:G")
+    opts, args = getopt.getopt(sys.argv[1:],"hi:mpg:Gl")
 except getopt.GetoptError:
     usage(sys.stderr)
     sys.exit(2)
@@ -99,6 +103,8 @@ for opt, arg in opts:
         PTC_INPUT = True
         USE_MESH_IDS = True
         USE_PTC_AS_GROUP_COL = True
+    elif opt == '-l':
+        FILTER_LANG = True
 
 #print("debug args after options: ",args)
 
@@ -117,15 +123,23 @@ for filename in input_files:
 
 print("INFO: Reading UMLS concepts and terms...")
 umls_mesh_to_cui = defaultdict(list)
-umls_cui_prefered_term = {}
+
+#
+# due to the possibility that a concept doesn't have an English term, 
+# there are two maps: one for English (index 1) one for non-English (index 0)
+umls_cui_prefered_term = [ {}, {} ]
+
 f= join(umlsDir, "META", UMLS_MAIN_FILE)
 with open(f) as infile:
     for line in infile:
         cols = line.rstrip().split(UMLS_SEP)
-        if cols[UMLS_COL_LANG] in UMLS_LANG_FILTER_VAL:                                     # filter language
+        index_lang = 0
+        if cols[UMLS_COL_LANG] in UMLS_LANG_FILTER_VAL:
+            index_lang = 1
+        if not FILTER_LANG or (index_lang == 1):                                     # filter language
             cui = cols[UMLS_COL_CUI]
-            if cols[UMLS_COL_PREFERED] == 'Y' and umls_cui_prefered_term.get(cui) is None:  # store only if prefered term, and only first found 
-                umls_cui_prefered_term[cui] = cols[UMLS_COL_TERM]
+            if cols[UMLS_COL_PREFERED] == 'Y' and umls_cui_prefered_term[index_lang].get(cui) is None:  # store only if prefered term, and only first found 
+                umls_cui_prefered_term[index_lang][cui] = cols[UMLS_COL_TERM]
             if USE_MESH_IDS and cols[UMLS_COL_SOURCE] == UMLS_MESH_SOURCE_FILTER_VAL:       # store all the CUIs corresponding to this Mesh
                 umls_mesh_to_cui[cols[UMLS_COL_MESH_ID]].append(cui)
 #                if cols[UMLS_COL_MESH_ID] == 'D000690':
@@ -171,20 +185,21 @@ for input_file in input_files:
                     else:
                         is_mesh = False
                     cols[INPUT_COL_CONCEPT_ID] = concept_id
-                term = None
                 if USE_MESH_IDS:
                     cui_list = umls_mesh_to_cui[concept_id]
                     if len(cui_list)>0:
                         # just picking the first matched cui
-                        term = umls_cui_prefered_term[cui_list[0]]
-#                    if concept_id == 'D000690':
-#                        print("DEBUG A: ",concept_id, "...",cui_list," term = ", term )
+                        cui = cui_list[0]
                 else:
-                    term = umls_cui_prefered_term.get(concept_id)
+                    cui = concept_id
+                term = umls_cui_prefered_term[1].get(cui)
                 if term is None:
-                    if not PTC_INPUT or is_mesh:
-                        print("Warning: no term found for concept '"+concept_id+"'",file=sys.stderr)
-                    term = "NA"
+                    # second attempt if no match found in English: non-English version
+                    term = umls_cui_prefered_term[0].get(cui)
+                    if term is None:
+                        if not PTC_INPUT or is_mesh:
+                            print("Warning: no term found for concept '"+concept_id+"'",file=sys.stderr)
+                        term = "NA"
                 cols.append(term)
                 if ADD_GROUP_COL:
                     groups = []
