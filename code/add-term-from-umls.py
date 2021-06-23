@@ -189,6 +189,8 @@ for input_file in input_files:
                     if len(cui_list)>0:
                         # just picking the first matched cui
                         cui = cui_list[0]
+                    else:
+                        raise Exception("Error: no CUI found for MeSH descriptor "+concept_id)
                 else:
                     cui = concept_id
                 term = umls_cui_prefered_term[1].get(cui)
