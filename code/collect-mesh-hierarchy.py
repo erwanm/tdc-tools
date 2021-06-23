@@ -32,7 +32,7 @@ def usage(out):
     print("",file=out)
     print("  Options:")
     print("    -h: print this help message.",file=out)
-    print("    -x: read the original MeSH xml desc20XX.xml as first argument",file=out)
+    print("    -x: read the original MeSH xml desc20XX.xml as first argument (slower)",file=out)
     print("    -r: reverse mode: collect all the ancestors of the concepts.",file=out)
     print("    -d <depth>: Maximum depth level of the search.",file=out)
     print("    -i: the input read from STDIN is made of MeSH tree ids instead of descriptors.",file=out)
@@ -43,7 +43,7 @@ def usage(out):
 def add_to_tree(tree, mesh, tree_ids):
     for tree_id in tree_ids:
         parts = tree_id.split('.')
-        prefix = parts[0:-1]
+        prefix = ".".join(parts[0:-1])
         child = parts[-1]
         if tree[prefix].get(child) is not None:
             raise Exception("Error: a MeSH tree id is supposed to correspond to a single MeSH descriptor (id: "+tree_id+", descriptors:"+tree[prefix][child]+","+mesh+")")
@@ -63,7 +63,7 @@ for opt, arg in opts:
     if opt == "-h":
         usage(sys.stdout)
         sys.exit()
-    elif opt = "-x":
+    elif opt == "-x":
         ORIGINAL_MESH_XML = True
     elif opt == "-r":
         REVERSE_MODE = True
@@ -92,24 +92,32 @@ by_desc = dict()
 tree = defaultdict(dict)
 
 if ORIGINAL_MESH_XML:
-    tree = ET.parse(mesh_data)
-    root = tree.getroot()
+    xml_tree = ET.parse(mesh_data)
+    root = xml_tree.getroot()
     for desc_node in root.findall('./DescriptorRecord'):
         mesh = desc_node.find('./DescriptorUI').text
         name = desc_node.find('./DescriptorName/String').text
         tree_id_nodes = desc_node.findall('./TreeNumberList/TreeNumber')
-        tree_ids = [ n.text for n in  tree_id_nodes ]
-        by_desc[mesh] = (name, tree_ids)
-        add_to_tree(tree, mesh, tree_ids)
+        if (len(tree_id_nodes)>0):
+            tree_ids = [ n.text for n in  tree_id_nodes ]
+            by_desc[mesh] = (name, tree_ids)
+            # print("DEBUG: by_desc[%s] = (%s,%s)" % (mesh, name, tree_ids),file=sys.stderr)
+            add_to_tree(tree, mesh, tree_ids)
+        else:
+            print("Warning: ignoring descr ",mesh," ("+name+"): no tree id.")
 else:
     with open(mesh_data) as infile:
         for line in infile:
-            cols = line.rstrip().split('\t')
+            cols = line.rstrip('\n').split('\t')
             mesh = cols[0]
             name = cols[1]
-            tree_ids = cols[2].split(' ')
-            by_desc[mesh] = (name, tree_ids)
-            add_to_tree(tree, mesh, name, tree_ids)
+            if (len(cols[2])>0):
+                tree_ids = cols[2].split(' ')
+                by_desc[mesh] = (name, tree_ids)
+#                print("DEBUG: by_desc[%s] = (%s,%s)" % (mesh, name, tree_ids),file=sys.stderr)
+                add_to_tree(tree, mesh, tree_ids)
+            else:
+                print("Warning: ignoring descr ",mesh," ("+name+") from MeSH data: no tree id.")
  
 
 # first get tree ids for input descriptors (or tree ids)
@@ -119,10 +127,16 @@ descrs = set([ s.rstrip() for s in sys.stdin ])
 if INPUT_AS_TREE_IDS:
     current = descrs
 else:
-    current = set([ by_desc[mesh][1] for mesh in descrs ])
+    current = set()
+    for mesh in descrs:
+        if by_desc.get(mesh) is None:
+            print("Warning: MeSH descriptor '"+mesh+"' not found, ignoring.")
+        else:
+#            print(mesh," -> ", by_desc[mesh][1],file=sys.stderr)
+            current = current.union(by_desc[mesh][1])
 for tree_id in current:
     parts = tree_id.split('.')
-    prefix = parts[0:-1]
+    prefix = ".".join(parts[0:-1])
     child = parts[-1]
     mesh = tree[prefix][child]
     collected[mesh].add(tree_id)
@@ -131,23 +145,25 @@ for tree_id in current:
 depth = 1
 while len(current)>0 and (MAX_DEPTH is None or depth <= MAX_DEPTH):
     new_ids = set()
+#    print("DEBUG current = ",current)
     for prefix in current:
         if REVERSE_MODE:
             parts = prefix.split('.')
             if len(parts)>1:
-                new_prefix = parts[0:-1]
-                mesh = tree[new_prefix]
+                new_prefix = ".".join(parts[0:-1])
+                child = parts[-1]
+                mesh = tree[new_prefix][child]
                 collected[mesh].add(new_prefix)
                 new_ids.add(new_prefix)
                 if EXTEND_TO_OTHER_BRANCHES:
-                    new_ids.union(set(by_desc[mesh][1]))
+                    new_ids = new_ids.union(set(by_desc[mesh][1]))
         else:
             for child,mesh in tree[prefix].items():
                 tree_id = prefix+"."+child
                 collected[mesh].add(tree_id)
                 new_ids.add(tree_id)
                 if EXTEND_TO_OTHER_BRANCHES:
-                    new_ids.union(set(by_desc[mesh][1]))
+                    new_ids = new_ids.union(set(by_desc[mesh][1]))
     current = new_ids
     depth += 1
 
