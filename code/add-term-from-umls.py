@@ -61,7 +61,7 @@ def usage(out):
     print("",file=out)
     print("  Options:")
     print("    -h: print this help message.",file=out)
-    print("    -i <id col>: concept id col; default: "+str(INPUT_COL_CONCEPT_ID)+".",file=out)
+    print("    -i <id col>: concept id col; default: "+str(INPUT_COL_CONCEPT_ID+1)+".",file=out)
     print("    -m Mesh ids instead of default UMLS CUI ids (CUI is the default).",  file=out)
     print("    -p PTC input: the concept is represented as <id>@<category>, and a Mesh id has a ",file=out)
     print("       prefix 'MESH:'. Both the category and the prefix are removed. Implies '-m'.",file=out)
