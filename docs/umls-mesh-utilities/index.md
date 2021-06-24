@@ -17,7 +17,7 @@ tdc-tools contains several python script to read and manipulate the [UMLS](https
    * Select "Current Production Year" in XML format
    * Download `desc20xx.xml`
 
-## `collect-umls-hierarchy.py`: extract all the concepts more specific than the input CUI
+## Extract all the concepts more specific than the input CUI
 
 Reads a list of CUI concepts (one by line) from STDIN and extracts from the UMLS data all their 'descendants' according to the UMLS hierarchy.
 
@@ -31,7 +31,7 @@ echo C0524851 | collect-umls-hierarchy.py /tmp/umls/ ND0.cui
 Note: the output contains all the descendant concepts as first column, and for each concept the second column contains a space-separated list containing the different ways this node was reached. Each element in the list is a triple `<depth>,<parent CUI>,<relation>`. In the default setting `<relation>` is always `RN` (Relation Narrower), but this can be extended with options `-i` or `-I`.
 
 
-## `collect-mesh-hierarchy.py`: extract all the concepts more specific than the input MeSH descriptor
+## Extract all the concepts more specific than the input MeSH descriptor
 
 This script is similar to `collect-umls-hierarchy.py` but uses MeSH descriptors instead of UMLS CUIs and reads the MeSH data. It reads a list of MeSH concepts (one by line) from STDIN and extracts all their 'descendants' according to the MeSH hierarchy.
 
@@ -54,7 +54,7 @@ The first variant is faster because it does not parse the original xml file ever
 
 
 
-## `add-term-from-umls.py`: map a concept id to its corresponding term and semantic group
+## Map a concept id to its corresponding term and semantic group
 
 Reads a list of input tsv files with a concept id column (either a UMLS CUI id or a MeSH descriptor) from STDIN and maps the id to a term using the UMLS data. For each input file `f` an output file `f.suffix` is created with an additional term column. 
 
@@ -70,7 +70,9 @@ The script can also read MeSH descriptors as input with option `-m`:
 ls ND0.mesh | add-term-from-umls.py -m -g SemGroups.txt /tmp/umls/ .details
 ```
 
-## `convert-umls-to-mesh.py`: convert between UMLS CUIs and MeSH descriptors
+Note: The input files are read from STDIN, this way it is possible to process a batch of input files while loading the UMLS data in memory only once.
+
+## Convert between UMLS CUIs and MeSH descriptors
 
 Converts a column of CUIs to MeSH or conversely.
 In general an input concept id may have any number of output ids (possibly zero). As a result the new column contains (in general) a list of ids which can be empty.
@@ -80,7 +82,7 @@ ls ND0.cui | convert-umls-to-mesh.py /tmp/umls/ .to-mesh
 ```
 
 ```
- ls ND0.mesh | convert-umls-to-mesh.py /tmp/umls/ .to-cui
+ls ND0.mesh | convert-umls-to-mesh.py /tmp/umls/ .to-cui
 ```
-## `list-column-to-tidy-format.py`: reformat a list column
+## Reformat a list column ("tidy" format)
 
