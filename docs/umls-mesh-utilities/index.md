@@ -25,7 +25,7 @@ In this example we use the CUI [C0524851](https://uts.nlm.nih.gov/uts/umls/conce
 
 
 ```
-echo C0524851 | collect-umls-hierarchy.py umls/ ND0.cuis.tsv
+echo C0524851 | collect-umls-hierarchy.py /tmp/umls/ ND0.cui
 ```
 
 Note: the output contains all the descendant concepts as first column, and for each concept the second column contains a space-separated list containing the different ways this node was reached. Each element in the list is a triple `<depth>,<parent CUI>,<relation>`. In the default setting `<relation>` is always `RN` (Relation Narrower), but this can be extended with options `-i` or `-I`.
@@ -41,13 +41,13 @@ There are two ways to use this script. By default the script reads a simplified 
 
 ```
 parse-mesh-desc-xml.py desc2021.xml mesh.tsv
-echo  D019636 | collect-mesh-hierarchy.py mesh.tsv ND0.mesh.tsv
+echo  D019636 | collect-mesh-hierarchy.py mesh.tsv ND0.mesh
 ```
 
 The original MeSH file can also be provided directly to the script with the option `-x`:
 
 ```
-echo  D019636 | collect-mesh-hierarchy.py -x desc2021.xml ND0.mesh.tsv
+echo  D019636 | collect-mesh-hierarchy.py -x desc2021.xml ND0.mesh
 ```
 
 The first variant is faster because it does not parse the original xml file every time `collect-mesh-hierarchy.py` is called.
@@ -58,7 +58,29 @@ The first variant is faster because it does not parse the original xml file ever
 
 Reads a list of input tsv files with a concept id column (either a UMLS CUI id or a MeSH descriptor) from STDIN and maps the id to a term using the UMLS data. For each input file `f` an output file `f.suffix` is created with an additional term column. 
 
+The UMLS "semantic group" associated to a CUI can also be added by using option `-g <UMLS sem groups file>`, where the file can be downloaded from https://lhncbc.nlm.nih.gov/semanticnetwork/download/SemGroups.txt.
 
+```
+ls ND0.cui | add-term-from-umls.py -g SemGroups.txt /tmp/umls/ .details
+```
+
+The script can also read MeSH descriptors as input with option `-m`:
+
+```
+ls ND0.mesh | add-term-from-umls.py -m -g SemGroups.txt /tmp/umls/ .details
+```
+
+## `convert-umls-to-mesh.py`: convert between UMLS CUIs and MeSH descriptors
+
+Converts a column of CUIs to MeSH or conversely.
+In general an input concept id may have any number of output ids (possibly zero). As a result the new column contains (in general) a list of ids which can be empty.
+
+```
+ls ND0.cui | convert-umls-to-mesh.py /tmp/umls/ .to-mesh
 ```
 
 ```
+ ls ND0.mesh | convert-umls-to-mesh.py /tmp/umls/ .to-cui
+```
+## `list-column-to-tidy-format.py`: reformat a list column
+
