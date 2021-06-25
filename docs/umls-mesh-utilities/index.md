@@ -82,7 +82,63 @@ ls ND0.cui | convert-umls-to-mesh.py /tmp/umls/ .to-mesh
 ```
 
 ```
-ls ND0.mesh | convert-umls-to-mesh.py /tmp/umls/ .to-cui
+ls ND0.mesh | convert-umls-to-mesh.py -r /tmp/umls/ .to-cui
 ```
 ## Reformat a list column ("tidy" format)
+
+Some of the scripts above generate an output with a column containing a (possibly empty) list of elements (for example list of semantic groups). Depending on the application it can be convenient to reformat this kind of data so that each row contain a single value in this column.
+
+```
+> head -n 3 ND0.mesh.to-cui
+D019636 Neurodegenerative Diseases      C10.574 C0270715 C0524851 C0751733
+D000070627      Chronic Traumatic Encephalopathy        C10.574.250     C0750973 C0750972 C4082769 C1527318
+D000080874      Synucleinopathies       C10.574.928     C5191670
+```
+
+
+```
+list-column-to-tidy-format.py ND0.mesh.to-cui ND0.mesh.to-cui.one-cui-by-line
+```
+
+```
+ head ND0.mesh.to-cui.one-cui-by-line 
+D019636 Neurodegenerative Diseases      C10.574 C0270715
+D019636 Neurodegenerative Diseases      C10.574 C0524851
+D019636 Neurodegenerative Diseases      C10.574 C0751733
+D000070627      Chronic Traumatic Encephalopathy        C10.574.250     C0750973
+D000070627      Chronic Traumatic Encephalopathy        C10.574.250     C0750972
+D000070627      Chronic Traumatic Encephalopathy        C10.574.250     C4082769
+D000070627      Chronic Traumatic Encephalopathy        C10.574.250     C1527318
+D000080874      Synucleinopathies       C10.574.928     C5191670
+D016262 Postpoliomyelitis Syndrome      C10.574.827     C0080040
+D016472 Motor Neuron Disease    C10.574.562     C0543858
+```
+
+
+## Observations about UMLS and MeSH identifiers
+
+The two systems differ in many ways, please refer to their documentation for details. As of 2021:
+
+* MeSH includes around 30,000 unique concepts.
+* UMLS includes around 4.4 millions unique concepts.
+
+Naturally this implies that there is no one-to-one correspondence between the two systems, so conversions are imperfect. For example the UMLS CUIs obtained from converting a group of MeSH descriptors do not cover all the CUIs found from UMLS:
+
+```
+> wc -l ND0.cui
+311 ND0.cui
+> cut -f 4 ND0.mesh.to-cui | tr ' ' '\n' | sort -u | wc -l
+210
+```
+
+In the other direction, the MeSH descriptors obtained from converting a group of CUIs includes more identifiers than the ones generated drectly from MeSH:
+
+```
+> wc -l ND0.mesh
+76 ND0.mesh
+> cut -f 3 ND0.cui.to-mesh | tr ' ' '\n' | sort -u | wc -l
+97
+```
+
+Note that this may also depend on the relations between concepts in the two systems and the options used when extracting the hierarchy.
 
