@@ -69,7 +69,7 @@ The output is structured this way in order to:
 
 Inside every subdirectory the files are organized by year (first part of the filename). There is a maximum number of documents by file in order to facilitate batch processing so there can be several files for every year. There is a special case for when the year of the document is undefined (treated as year `0000`, see below).
 
-**Important:** the process requires a lot of computing time (a few months if using a single process) and ''the resulting data is 317 GB'' (for the January 2021 PTC data).
+**Important:** the process requires a lot of computing time (a few months if using a single process) and **the resulting data is 317 GB** (for the January 2021 PTC data).
 
 ## Requirements
 
