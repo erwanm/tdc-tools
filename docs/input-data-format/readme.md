@@ -1,5 +1,23 @@
 # TDC: input data format
 
+## Overview
+
+TDC (Tabular Document-Concept)  is a format specificailly designed to represent the biomedical literature as a collection of documents represented by their concepts. In particular it facilitates the extraction of a knowledge graph of concepts and can be used as a support for Literature-Based Discovery (LBD).
+
+The format is meant as a form of standard which disconnects the stage of data extraction from the the stage of high level exploitation:
+
+* Upstream, different datasets and extraction methods can be represented as TDC.
+* Downtream, different applications and methods (e.g. LBD methods) can exploit any dataset represented as TDC.
+
+Currently two main options are proposed to obtain a TDC representation of the biomedical literature:
+
+- [PubTatorCentral](https://www.ncbi.nlm.nih.gov/research/pubtator/) conveniently provides Medline/PMC data after annotation and disambiguation.
+    - [Downloading and preparing the raw PTC data](#collecting-pubtator-central-(PTC)-data) 
+    - [Converting the PTC data to TDC format](../converting-ptc-data-to-tdc-format)
+- The raw Medline/PMC data can be converted to TDC and disambiguated using the following tools:
+    - [This fork of the Knowedge Discovery (KD) repository](https://github.com/erwanm/knowledgediscovery) (The [original code](https://github.com/jakelever/knowledgediscovery) was made by Jake Lever)
+    - The in-house disambiguation code ["KD Data Tools"](https://github.com/erwanm/kd-data-tools)
+  
 
 ## Format
 
