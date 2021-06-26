@@ -2,6 +2,16 @@
 
 This is the documentation of the [TDC Tools repository](https://github.com/erwanm/tdc-tools). TDC stands for Tabular Document-Concept.
 
+## Contents
+
+* [TDC: input data format](input-data-format)
+* [Converting PTC data to TDC format](converting-ptc-data-to-tdc-format)
+* [Generate the doc-concept matrix](#generating-doc-concept-matrix-data)
+* [Collect individual and joint frequency by concept](collecting-frequency-by-concept)
+* [tdc-tools: UMLS and MeSH utilities](umls-mesh-utilities)
+* [Use-case: preparing the ND dataset for LBD contrast analysis](ND-use-case)
+
+
 ## Overview
 
 This repository contains Python and Bash scripts to generate and manipulate data in the Tabular Document-Concept (TDC) format. TDC is a format specificailly designed to represent the biomedical literature as a collection of documents represented by their concepts. In particular it facilitates the extraction of a knowledge graph of concepts and can be used as a support for Literature-Based Discovery (LBD).
@@ -35,15 +45,4 @@ export PATH=$PATH:$(pwd)/code
 ```
 
 Note that the scripts can also be called with their path, e.g. `code/build-doc-concept-matrix-all-variants.sh`.
-
-## Contents
-
-* [TDC: input data format](input-data-format)
-* [Converting PTC data to TDC format](converting-ptc-data-to-tdc-format)
-* [Generate the doc-concept matrix](#generating-doc-concept-matrix-data)
-* [Collect individual and joint frequency by concept](collecting-frequency-by-concept)
-* [tdc-tools: UMLS and MeSH utilities](umls-mesh-utilities)
-* [Use-case: preparing the ND dataset for LBD contrast analysis](ND-use-case)
-
-
 
