@@ -1,6 +1,6 @@
 # tdc-tools documentation
 
-This is the documentation of the TDC Tools repository. TDC stands for Tabular Document-Concept.
+This is the documentation of the [TDC Tools repository](https://github.com/erwanm/tdc-tools). TDC stands for Tabular Document-Concept.
 
 ## Overview
 
