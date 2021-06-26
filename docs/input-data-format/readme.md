@@ -1,7 +1,7 @@
 # TDC: input data format
 
-* Top [Main documentation](..)
-* Next [Converting PTC data to TDC format](converting-ptc-data-to-tdc-format)
+* Top: [Main documentation](..)
+* Next: [Converting PTC data to TDC format](converting-ptc-data-to-tdc-format)
 
 
 ## Overview
