@@ -12,14 +12,14 @@ The format is meant as a form of standard which disconnects the stage of data ex
 Currently two main options are proposed to obtain a TDC representation of the biomedical literature:
 
 - [PubTatorCentral](https://www.ncbi.nlm.nih.gov/research/pubtator/) conveniently provides Medline/PMC data after annotation and disambiguation.
-    - [Downloading and preparing the raw PTC data](#collecting-pubtator-central-(PTC)-data) 
+    - [Downloading and preparing the raw PTC data](#collecting-pubtator-central-PTC-data) 
     - [Converting the PTC data to TDC format](../converting-ptc-data-to-tdc-format)
 - The raw Medline/PMC data can be converted to TDC and disambiguated using the following tools:
     - [This fork of the Knowedge Discovery (KD) repository](https://github.com/erwanm/knowledgediscovery) (The [original code](https://github.com/jakelever/knowledgediscovery) was made by Jake Lever)
     - The in-house disambiguation code ["KD Data Tools"](https://github.com/erwanm/kd-data-tools)
   
 
-## Format
+## The TDC format
 
 * Note: description from [this KnowledgeDiscovery fork](https://github.com/erwanm/knowledgediscovery). The format was originally designed for the KD data, hence the use UMLS CUIs as concept identifiers (CUIs can be replaced with any concept id).
 
