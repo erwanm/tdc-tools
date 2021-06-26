@@ -1,5 +1,9 @@
 # TDC: input data format
 
+* Top [Main documentation](..)
+* Next [Converting PTC data to TDC format](converting-ptc-data-to-tdc-format)
+
+
 ## Overview
 
 TDC (Tabular Document-Concept)  is a format specificailly designed to represent the biomedical literature as a collection of documents represented by their concepts. In particular it facilitates the extraction of a knowledge graph of concepts and can be used as a support for Literature-Based Discovery (LBD).
