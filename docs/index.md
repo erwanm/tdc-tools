@@ -15,6 +15,27 @@ Most of the biomedical literature is available for download from [Medline](https
 * Preserves link of a concept with its source sentence/document (this is possible but not implemented) 
 * Additional utilities based on UMLS/MeSH resources
 
+### Software requirements
+
+Most scripts require only Python 3 and a few standard Python libraries. 
+
+* [Converting PTC data to TDC format](converting-ptc-data-to-tdc-format) requires the following additional libraries: `bioc`, `spacy`, `scispacy`.
+* Using the KD data (see [TDC: input data format](input-data-format)) requires additional software.
+
+### Data requirements
+
+The scripts can be used with any dataset in the TDC format. See [TDC: input data format](input-data-format).
+
+### Setup
+
+In this documentation we assume that the scripts are available in the `$PATH` environment variable. For this setup run the following command from the `tdc-tools` directory:
+
+```
+export PATH=$PATH:$(pwd)/code
+```
+
+Note that the scripts can also be called with their path, e.g. `code/build-doc-concept-matrix-all-variants.sh`.
+
 ## Contents
 
 * [TDC: input data format](input-data-format)
