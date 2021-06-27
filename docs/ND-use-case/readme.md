@@ -110,11 +110,13 @@ ls PTC.tmp/*indiv.aggregated | add-term-from-umls.py -G /tmp/umls/ .with-term```
 ls KD.tmp/*indiv.aggregated | add-term-from-umls.py -g SemGroups.txt /tmp/umls/ .with-term
 ```
 
-## Classift by target
+## Classify by target
 
 ### PTC
 
-TODO
+```
+for level in by-doc by-sent; do for view in unfiltered-medline pmc-articles abstracts+articles; do cat ND.mesh.targets | sed 's/^MESH://g'  | classify-coocurrences-by-target.py -p PTC.tmp/$level.$view.indiv.aggregated.with-term PTC.tmp/$level.$view.joint.aggregated results/PTC/$level/$view; done; done
+```
 
 ### KD
 
@@ -122,3 +124,13 @@ TODO
 for level in by-doc by-sent; do for view in unfiltered-medline pmc-articles abstracts+articles; do cat ND.cui.t
 argets | classify-coocurrences-by-target.py KD.tmp/$level.$view.indiv.aggregated.with-term KD.tmp/$level.$view.joint.aggregated results/KD/$level/$view; done; done
 ```
+
+The final datasets are in the directory `results` which is organized as follows: 
+
+* The directory structure is `<dataset_id>/<level>/<view>`, where `dataset_id` is either KD or PTC.
+* Each `view` directory contains:
+   * a file `targets.tsv` with columns `<target id> <indiv frequency> <term> <list of groups>` 
+   * a file `<target_id>` for every target concept present in th data, with columns <concept id> <indiv freq> <term> <list of groups> <joint freq>`
+   * a file `total.tsv` with a single line: `<total nb documents> <total nb concepts>`
+  
+  
