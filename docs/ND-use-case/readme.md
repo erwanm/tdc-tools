@@ -26,7 +26,7 @@ cut -f 1 ND.cui >ND.cui.targets
 
 ## Collect individual and joint frequency by concept
 
-See [Collecting individual and joint frequency by concept](../collecting-frequency-by-concept) for detailed instructions.
+See [Collecting individual and joint frequency by concept](../collecting-frequency-by-concept) for more details.
 
 ### Individual frequency
 
