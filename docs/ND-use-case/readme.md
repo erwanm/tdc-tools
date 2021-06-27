@@ -89,5 +89,23 @@ for level in by-doc by-sent; do for view in unfiltered-medline pmc-articles abst
 ```
 
 ```
+for level in by-doc by-sent; do for view in unfiltered-medline pmc-articles abstracts+articles; do sum-freq-over-years.py -j KD.joint/$level/$view/ 0 3000 KD.tmp/$level.$view.joint.aggregated; done; done
+```
 
+## Add term and group for every concept
+
+This step requires the UMLS data, see [UMLS and MeSH utlilities](../umls-mesh-utilities).
+
+### PTC
+
+TODO 
+
+```
+ls PTC.tmp/*indiv.aggregated | add-term-from-umls.py -G /tmp/umls/ .with-term
+```
+
+### KD
+
+```
+ls KD.tmp/*indiv.aggregated | add-term-from-umls.py -g SemGroups.txt /tmp/umls/ .with-term
 ```
