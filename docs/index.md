@@ -1,43 +1,48 @@
 # tdc-tools documentation
 
-* [tdc-tools: UMLS and MeSH utilities](umls-mesh-utilities)
+This is the documentation of the [TDC Tools repository](https://github.com/erwanm/tdc-tools). TDC stands for Tabular Document-Concept.
 
-TODO
+## Contents
 
-## Welcome to GitHub Pages
+* [TDC: input data format](input-data-format)
+* [Converting PTC data to TDC format](converting-ptc-data-to-tdc-format)
+* [Generate the doc-concept matrix](generating-doc-concept-matrix-data)
+* [Collect individual and joint frequency by concept](collecting-frequency-by-concept)
+* [UMLS and MeSH utilities](umls-mesh-utilities)
+* [Use-case: preparing the ND dataset for LBD contrast analysis](ND-use-case)
 
-You can use the [editor on GitHub](https://github.com/erwanm/tdc-tools/edit/main/docs/index.md) to maintain and preview the content for your website in Markdown files.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## Overview
 
-### Markdown
+This repository contains Python and Bash scripts to generate and manipulate data in the Tabular Document-Concept (TDC) format. TDC is a format specificailly designed to represent the biomedical literature as a collection of documents represented by their concepts. In particular it facilitates the extraction of a knowledge graph of concepts and can be used as a support for Literature-Based Discovery (LBD).
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+Most of the biomedical literature is available for download from [Medline](https://www.nlm.nih.gov/medline/index.html) and [PubMedCentral](https://www.ncbi.nlm.nih.gov/pmc/) (PMC). [PubTatorCentral](https://www.ncbi.nlm.nih.gov/research/pubtator) (PTC) offers an alternative to the raw data format with the BioC format. While the PTC data is much richer and BioC more convenient than the raw xml format, these formats are all fairly low level: very detailed, quite complex to parse, and not very convenient to capture high-level relations between articles or concepts. By contrast the TDC format is a high-level representation of the literature where each document is considered as a collection of concepts and the documents are grouped by year of publication. The format is meant to facilitate the extraction of the concepts individual and joint frequency.
 
-```markdown
-Syntax highlighted code block
+* Common format for different extraction methods, e.g. using the [Knowledge Discovery (KD)](https://github.com/erwanm/kd-data-tools) system or PTC.
+* Suited for Literature-Based Discovery and similar applications
+* Tabular format akin to a relational database 
+* Year-based format to facilitate analysis across time or filtering by range of years
+* Preserves link of a concept with its source sentence/document (this is possible but not implemented) 
+* Additional utilities based on UMLS/MeSH resources
 
-# Header 1
-## Header 2
-### Header 3
+### Software requirements
 
-- Bulleted
-- List
+Most scripts require only Python 3 and a few standard Python libraries. 
 
-1. Numbered
-2. List
+* [Converting PTC data to TDC format](converting-ptc-data-to-tdc-format) requires the following additional libraries: `bioc`, `spacy`, `scispacy`.
+* Using the KD data (see [TDC: input data format](input-data-format)) requires additional software.
 
-**Bold** and _Italic_ and `Code` text
+### Data requirements
 
-[Link](url) and ![Image](src)
+The scripts can be used with any dataset in the TDC format. See [TDC: input data format](input-data-format).
+
+### Setup
+
+In this documentation we assume that the scripts are available in the `$PATH` environment variable. For this setup run the following command from the `tdc-tools` directory:
+
+```
+export PATH=$PATH:$(pwd)/code
 ```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+Note that the scripts can also be called with their path, e.g. `code/build-doc-concept-matrix-all-variants.sh`.
 
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/erwanm/tdc-tools/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
