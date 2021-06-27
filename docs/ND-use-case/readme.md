@@ -98,14 +98,27 @@ This step requires the UMLS data, see [UMLS and MeSH utlilities](../umls-mesh-ut
 
 ### PTC
 
-TODO 
 
 ```
-ls PTC.tmp/*indiv.aggregated | add-term-from-umls.py -G /tmp/umls/ .with-term
+ls PTC.tmp/*indiv.aggregated | add-term-from-umls.py -G /tmp/umls/ .with-term```
 ```
+
 
 ### KD
 
 ```
 ls KD.tmp/*indiv.aggregated | add-term-from-umls.py -g SemGroups.txt /tmp/umls/ .with-term
+```
+
+## Classift by target
+
+### PTC
+
+TODO
+
+### KD
+
+```
+for level in by-doc by-sent; do for view in unfiltered-medline pmc-articles abstracts+articles; do cat ND.cui.t
+argets | classify-coocurrences-by-target.py KD.tmp/$level.$view.indiv.aggregated.with-term KD.tmp/$level.$view.joint.aggregated results/KD/$level/$view; done; done
 ```
