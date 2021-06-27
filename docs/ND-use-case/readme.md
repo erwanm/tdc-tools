@@ -125,12 +125,27 @@ for level in by-doc by-sent; do for view in unfiltered-medline pmc-articles abst
 argets | classify-coocurrences-by-target.py KD.tmp/$level.$view.indiv.aggregated.with-term KD.tmp/$level.$view.joint.aggregated results/KD/$level/$view; done; done
 ```
 
+## Copy the totals files
+
+### PTC
+
+```
+for level in by-doc by-sent; do for view in unfiltered-medline pmc-articles abstracts+articles; do cp PTC.tmp/$level.$view.indiv.aggregated0.total results/PTC/$level/$view/total.tsv; done; done
+```
+
+### KD
+
+```
+for level in by-doc by-sent; do for view in unfiltered-medline pmc-articles abstracts+articles; do cp KD.tmp/$level.$view.indiv.aggregated.total results/KD/$level/$view/total.tsv; done; done
+```
+
+
 The final datasets are in the directory `results` which is organized as follows: 
 
 * The directory structure is `<dataset_id>/<level>/<view>`, where `dataset_id` is either KD or PTC.
 * Each `view` directory contains:
    * a file `targets.tsv` with columns `<target id> <indiv frequency> <term> <list of groups>` 
-   * a file `<target_id>` for every target concept present in th data, with columns <concept id> <indiv freq> <term> <list of groups> <joint freq>`
+   * a file `<target_id>` for every target concept present in th data, with columns `<concept id> <indiv freq> <term> <list of groups> <joint freq>`
    * a file `total.tsv` with a single line: `<total nb documents> <total nb concepts>`
   
   
