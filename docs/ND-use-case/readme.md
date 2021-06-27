@@ -54,3 +54,40 @@ get-frequency-from-doc-concept-matrix-all-variants.sh -j KD.dcm/ KD.joint ND.cui
 
 Duration: around 20 hours (single process).
 
+Check that there was no error and delete the error files:
+
+```
+cat *.joint/*/*/*err
+rm -f *.joint/*/*/*err
+```
+
+## Aggregating frequencies across years
+
+### PTC
+
+```
+mkdir PTC.tmp
+for level in by-doc by-sent; do for view in unfiltered-medline pmc-articles abstracts+articles; do sum-freq-over-years.py /tmp/ptc.concept-freq/$level/$view/ 0 3000 PTC.tmp/$level.$view.indiv.aggregated0; done; done
+```
+
+```
+for level in by-doc by-sent; do for view in unfiltered-medline pmc-articles abstracts+articles; do sum-freq-over-years.py -j PTC.joint/$level/$view/ 0 3000 PTC.tmp/$level.$view.joint.aggregated0; done; done
+```
+
+In PTC the semantic groups/categories require an additional step:
+
+```
+for f in PTC.tmp/*indiv.aggregated0; do ptc-aggregate-across-types.py -t  $f ${f%%0}; done
+for f in PTC.tmp/*joint.aggregated0; do ptc-aggregate-across-types.py -j  $f ${f%%0}; done
+```
+
+### KD
+
+```
+mkdir KD.tmp
+for level in by-doc by-sent; do for view in unfiltered-medline pmc-articles abstracts+articles; do sum-freq-over-years.py /tmp/kd.concept-freq/$level/$view/ 0 3000 KD.tmp/$level.$view.indiv.aggregated; done; done
+```
+
+```
+
+```
