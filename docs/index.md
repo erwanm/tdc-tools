@@ -8,7 +8,7 @@ This is the documentation of the [TDC Tools repository](https://github.com/erwan
 * [Converting PTC data to TDC format](converting-ptc-data-to-tdc-format)
 * [Generate the doc-concept matrix](generating-doc-concept-matrix-data)
 * [Collect individual and joint frequency by concept](collecting-frequency-by-concept)
-* [tdc-tools: UMLS and MeSH utilities](umls-mesh-utilities)
+* [UMLS and MeSH utilities](umls-mesh-utilities)
 * [Use-case: preparing the ND dataset for LBD contrast analysis](ND-use-case)
 
 
