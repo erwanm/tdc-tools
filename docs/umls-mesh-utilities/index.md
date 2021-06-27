@@ -25,7 +25,7 @@ In this example we use the CUI [C0524851](https://uts.nlm.nih.gov/uts/umls/conce
 
 
 ```
-echo C0524851 | collect-umls-hierarchy.py /tmp/umls/ ND0.cui
+echo C0524851 | collect-umls-hierarchy.py /tmp/umls/ ND.cui
 ```
 
 Note: the output contains all the descendant concepts as first column, and for each concept the second column contains a space-separated list containing the different ways this node was reached. Each element in the list is a triple `<depth>,<parent CUI>,<relation>`. In the default setting `<relation>` is always `RN` (Relation Narrower), but this can be extended with options `-i` or `-I`.
@@ -41,13 +41,13 @@ There are two ways to use this script. By default the script reads a simplified 
 
 ```
 parse-mesh-desc-xml.py desc2021.xml mesh.tsv
-echo  D019636 | collect-mesh-hierarchy.py mesh.tsv ND0.mesh
+echo  D019636 | collect-mesh-hierarchy.py mesh.tsv ND.mesh
 ```
 
 The original MeSH file can also be provided directly to the script with the option `-x`:
 
 ```
-echo  D019636 | collect-mesh-hierarchy.py -x desc2021.xml ND0.mesh
+echo  D019636 | collect-mesh-hierarchy.py -x desc2021.xml ND.mesh
 ```
 
 The first variant is faster because it does not parse the original xml file every time `collect-mesh-hierarchy.py` is called.
@@ -61,13 +61,13 @@ Reads a list of input tsv files with a concept id column (either a UMLS CUI id o
 The UMLS "semantic group" associated to a CUI can also be added by using option `-g <UMLS sem groups file>`, where the file can be downloaded from https://lhncbc.nlm.nih.gov/semanticnetwork/download/SemGroups.txt.
 
 ```
-ls ND0.cui | add-term-from-umls.py -g SemGroups.txt /tmp/umls/ .details
+ls ND.cui | add-term-from-umls.py -g SemGroups.txt /tmp/umls/ .details
 ```
 
 The script can also read MeSH descriptors as input with option `-m`:
 
 ```
-ls ND0.mesh | add-term-from-umls.py -m -g SemGroups.txt /tmp/umls/ .details
+ls ND.mesh | add-term-from-umls.py -m -g SemGroups.txt /tmp/umls/ .details
 ```
 
 Note: The input files are read from STDIN, this way it is possible to process a batch of input files while loading the UMLS data in memory only once.
@@ -78,18 +78,18 @@ Converts a column of CUIs to MeSH or conversely.
 In general an input concept id may have any number of output ids (possibly zero). As a result the new column contains (in general) a list of ids which can be empty.
 
 ```
-ls ND0.cui | convert-umls-to-mesh.py /tmp/umls/ .to-mesh
+ls ND.cui | convert-umls-to-mesh.py /tmp/umls/ .to-mesh
 ```
 
 ```
-ls ND0.mesh | convert-umls-to-mesh.py -r /tmp/umls/ .to-cui
+ls ND.mesh | convert-umls-to-mesh.py -r /tmp/umls/ .to-cui
 ```
 ## Reformat a list column ("tidy" format)
 
 Some of the scripts above generate an output with a column containing a (possibly empty) list of elements (for example list of semantic groups). Depending on the application it can be convenient to reformat this kind of data so that each row contain a single value in this column.
 
 ```
-> head -n 3 ND0.mesh.to-cui
+> head -n 3 ND.mesh.to-cui
 D019636 Neurodegenerative Diseases      C10.574 C0270715 C0524851 C0751733
 D000070627      Chronic Traumatic Encephalopathy        C10.574.250     C0750973 C0750972 C4082769 C1527318
 D000080874      Synucleinopathies       C10.574.928     C5191670
@@ -97,11 +97,11 @@ D000080874      Synucleinopathies       C10.574.928     C5191670
 
 
 ```
-list-column-to-tidy-format.py ND0.mesh.to-cui ND0.mesh.to-cui.one-cui-by-line
+list-column-to-tidy-format.py ND.mesh.to-cui ND.mesh.to-cui.one-cui-by-line
 ```
 
 ```
- head ND0.mesh.to-cui.one-cui-by-line 
+ head ND.mesh.to-cui.one-cui-by-line 
 D019636 Neurodegenerative Diseases      C10.574 C0270715
 D019636 Neurodegenerative Diseases      C10.574 C0524851
 D019636 Neurodegenerative Diseases      C10.574 C0751733
@@ -125,18 +125,18 @@ The two systems differ in many ways, please refer to their documentation for det
 Naturally this implies that there is no one-to-one correspondence between the two systems, so conversions are imperfect. For example the UMLS CUIs obtained from converting a group of MeSH descriptors do not cover all the CUIs found from UMLS:
 
 ```
-> wc -l ND0.cui
-311 ND0.cui
-> cut -f 4 ND0.mesh.to-cui | tr ' ' '\n' | sort -u | wc -l
+> wc -l ND.cui
+311 ND.cui
+> cut -f 4 ND.mesh.to-cui | tr ' ' '\n' | sort -u | wc -l
 210
 ```
 
 In the other direction, the MeSH descriptors obtained from converting a group of CUIs includes more identifiers than the ones generated drectly from MeSH:
 
 ```
-> wc -l ND0.mesh
-76 ND0.mesh
-> cut -f 3 ND0.cui.to-mesh | tr ' ' '\n' | sort -u | wc -l
+> wc -l ND.mesh
+76 ND.mesh
+> cut -f 3 ND.cui.to-mesh | tr ' ' '\n' | sort -u | wc -l
 97
 ```
 
