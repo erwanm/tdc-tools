@@ -102,10 +102,12 @@ with open(f,"w") as out_file:
     for target in target_concepts:
         data = concept_info.get(target)
         if data is None:
-            raise Exception("Error: cannot find target '"+target+"' in '"+indiv_file+"'")
-        out_file.write("%s\t%s\t%s\t%s\n" % (target, data[0], data[1], data[2]))
-        ft = join(output_dir, target)
-        targets_files[target] = open(ft,"w")
+#            raise Exception("Error: cannot find target '"+target+"' in '"+indiv_file+"'")
+            print("Warning: cannot find target '"+target+"' in '"+indiv_file+"', ignoring target.")
+        else:
+            out_file.write("%s\t%s\t%s\t%s\n" % (target, data[0], data[1], data[2]))
+            ft = join(output_dir, target)
+            targets_files[target] = open(ft,"w")
 
 nb_total = 0
 nb_no_target = 0

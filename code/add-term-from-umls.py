@@ -177,7 +177,7 @@ for input_file in input_files:
                         ptc_category = concept_id[sep_pos+1:]
                         concept_id = concept_id[0:sep_pos]
                     else:
-                        raise Exception("let's see:",concept_id)
+                        raise Exception("Bug! the concept id is supposed to contain '"+SEPARATOR_CONCEPT_ID_TYPE+"', this is not supposed to happen.",concept_id)
                     if concept_id[:5] == 'MESH:':
                         is_mesh = True
                         concept_id = concept_id[5:]
@@ -185,12 +185,14 @@ for input_file in input_files:
                         is_mesh = False
                     cols[INPUT_COL_CONCEPT_ID] = concept_id
                 if USE_MESH_IDS:
-                    cui_list = umls_mesh_to_cui[concept_id]
-                    if len(cui_list)>0:
-                        # just picking the first matched cui
-                        cui = cui_list[0]
-                    else:
-                        raise Exception("Error: no CUI found for MeSH descriptor "+concept_id)
+                    cui = None
+                    if is_mesh:
+                        cui_list = umls_mesh_to_cui[concept_id]
+                        if len(cui_list)>0:
+                            # just picking the first matched cui
+                            cui = cui_list[0]
+#                        else:
+#                            print("Warning: no CUI found for MeSH descriptor "+concept_id)
                 else:
                     cui = concept_id
                 term = umls_cui_prefered_term[1].get(cui)

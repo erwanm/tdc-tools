@@ -99,7 +99,7 @@ for f in files:
             else:
                 cumulate(count_map, COLS_CONCEPT_INDIV, COLS_COUNT_INDIV, fname)
         else:
-            if f == str(year)+".total":
+            if f == "%04d" % (year)+".total":
                 cumulate(count_map_total, COLS_CONCEPT_TOTAL, COLS_COUNT_TOTAL, fname)
             else:
                 raise Exception("Error: wrong format in filename '"+fname+"', expecting <year> or <year>.total")
