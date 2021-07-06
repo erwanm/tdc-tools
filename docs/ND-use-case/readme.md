@@ -112,6 +112,14 @@ ls KD.tmp/*indiv.aggregated | add-term-from-umls.py -g SemGroups.txt /tmp/umls/ 
 
 ## Classify by target
 
+Every output file is named using the target concept id and contains a list of related concepts. It follows the following format: 
+
+```
+<concept id> <indiv freq> <term> <list of groups> <joint freq>
+```
+
+Note: `<list of groups>` is a (possibly empty) list of groups separated by spaces.
+
 ### PTC
 
 ```
@@ -149,3 +157,13 @@ The final datasets are in the directory `results` which is organized as follows:
    * a file `total.tsv` with a single line: `<total nb documents> <total nb concepts>`
   
   
+## Generate the 'tidy' version for every output file
+
+A reformated version of every output file is generated where the 4th column `<list of groups>` (see above) is split so that every row contains exactly one group. 
+
+* If there are multiple groups the other columns are duplicated
+* If there is no group the empty group column is replaced with `NA` 
+
+```
+ls results/*/*/*/* | grep -v '.tsv' | while read f; do list-column-to-tidy-format.py -c 4 $f $f.key-id-group; done
+```
