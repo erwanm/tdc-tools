@@ -1,5 +1,5 @@
 # tdc-tools
-Tools for manipulating Tabular Document-Concept format
+Tools for representing and manipulating data in the Tabular Document-Concept format
 
 # Overview
 
