@@ -1,6 +1,11 @@
 # tdc-tools
 Tools for representing and manipulating data in the Tabular Document-Concept (TDC) format
 
+* Documentation: https://erwanm.github.io/tdc-tools/
+* This is the companion code for the paper: **pending**
+* KD and PTC datasets generated from the January 2021 data: https://zenodo.org/record/5138386
+
+
 ### Overview
 
 This repository contains Python and Bash scripts to generate and manipulate data in the Tabular Document-Concept (TDC) format. TDC is a format specificailly designed to represent the biomedical literature as a collection of documents represented by their concepts. In particular it facilitates the extraction of a knowledge graph of concepts and can be used as a support for Literature-Based Discovery (LBD).
@@ -13,6 +18,3 @@ Most of the biomedical literature is available for download from [Medline](https
 * Year-based format to facilitate analysis across time or filtering by range of years
 * Preserves link of a concept with its source sentence/document (this is possible but not implemented) 
 
-### Documentation
-
-See the full documentation for more detail: https://erwanm.github.io/tdc-tools/
