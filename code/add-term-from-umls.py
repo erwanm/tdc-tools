@@ -40,6 +40,7 @@ FILTER_LANG = False
 ADD_GROUP_COL = False
 PTC_INPUT = False
 USE_MESH_IDS = False
+REMOVE_MESH_PREFIX = False
 USE_PTC_AS_GROUP_COL = False
 
 INPUT_CONCEPT_FREQ_SEP=":"
@@ -63,12 +64,13 @@ def usage(out):
     print("    -h: print this help message.",file=out)
     print("    -i <id col>: concept id col; default: "+str(INPUT_COL_CONCEPT_ID+1)+".",file=out)
     print("    -m Mesh ids instead of default UMLS CUI ids (CUI is the default).",  file=out)
+    print("    -M Mesh ids instead of default UMLS CUI ids + prefix 'MESH:' in the input files.",  file=out)
     print("    -p PTC input: the concept is represented as <id>@<category>, and a Mesh id has a ",file=out)
-    print("       prefix 'MESH:'. Both the category and the prefix are removed. Implies '-m'.",file=out)
+    print("       prefix 'MESH:'. Both the category and the prefix are removed. Implies '-M'.",file=out)
     print("    -g <UMLS sem groups file> add 'semantic group' column using UMLS group hierarchy which",file=out)
     print("       can be downloaded at https://lhncbc.nlm.nih.gov/semanticnetwork/download/SemGroups.txt",file=out)
-    print("    -G add 'semantic group' column using PTC annotated type (requires PTC input; implies -p and -m)",file=out)
-    print("    -l filter only English language terms. This can be produce 'NA' terms if a concept does ",file=out)
+    print("    -G add 'semantic group' column using PTC annotated type (requires PTC input; implies -p and -M)",file=out)
+    print("    -l filter only English language terms. This can produce 'NA' terms if a concept does ",file=out)
     print("       not have any English term (this is rare but it happens). By default English is prefered")
     print("       but non-English is used if no English term is found.",file=out)
     print("",file=out)
@@ -79,7 +81,7 @@ def usage(out):
 
 umlsGroupFile = None
 try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:mpg:Gl")
+    opts, args = getopt.getopt(sys.argv[1:],"hi:mMpg:Gl")
 except getopt.GetoptError:
     usage(sys.stderr)
     sys.exit(2)
@@ -91,9 +93,13 @@ for opt, arg in opts:
         INPUT_COL_CONCEPT_ID = int(arg) -1
     elif opt == "-m":
         USE_MESH_IDS = True
+    elif opt == "-M":
+        USE_MESH_IDS = True
+        REMOVE_MESH_PREFIX = True
     elif opt == '-p':
         PTC_INPUT = True
         USE_MESH_IDS = True
+        REMOVE_MESH_PREFIX = True
     elif opt == '-g':
         ADD_GROUP_COL = True
         umlsGroupFile = arg
@@ -101,6 +107,7 @@ for opt, arg in opts:
         ADD_GROUP_COL = True
         PTC_INPUT = True
         USE_MESH_IDS = True
+        REMOVE_MESH_PREFIX = True
         USE_PTC_AS_GROUP_COL = True
     elif opt == '-l':
         FILTER_LANG = True
@@ -171,6 +178,13 @@ for input_file in input_files:
             for line in infile:
                 cols = line.rstrip().split('\t')
                 concept_id = cols[INPUT_COL_CONCEPT_ID]
+                cui_list = None
+                if REMOVE_MESH_PREFIX:
+                    if concept_id[:5] == 'MESH:':
+                        is_mesh = True
+                        concept_id = concept_id[5:]
+                    else:
+                        is_mesh = False
                 if PTC_INPUT:
                     sep_pos = concept_id.rfind(SEPARATOR_CONCEPT_ID_TYPE)
                     if sep_pos != -1:
@@ -178,12 +192,7 @@ for input_file in input_files:
                         concept_id = concept_id[0:sep_pos]
                     else:
                         raise Exception("Bug! the concept id is supposed to contain '"+SEPARATOR_CONCEPT_ID_TYPE+"', this is not supposed to happen.",concept_id)
-                    if concept_id[:5] == 'MESH:':
-                        is_mesh = True
-                        concept_id = concept_id[5:]
-                    else:
-                        is_mesh = False
-                    cols[INPUT_COL_CONCEPT_ID] = concept_id
+                cols[INPUT_COL_CONCEPT_ID] = concept_id
                 if USE_MESH_IDS:
                     cui = None
                     if is_mesh:

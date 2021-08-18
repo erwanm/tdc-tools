@@ -100,7 +100,7 @@ This step requires the UMLS data, see [UMLS and MeSH utlilities](../umls-mesh-ut
 
 
 ```
-ls PTC.tmp/*indiv.aggregated | add-term-from-umls.py -G /tmp/umls/ .with-term```
+ls PTC.tmp/*indiv.aggregated | add-term-from-umls.py -G /tmp/umls/ .with-term
 ```
 
 
