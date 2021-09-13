@@ -39,8 +39,8 @@ def usage(out):
 
 
 def condition_satisfied(values, patterns, mini, maxi, ptc_format):
-#    print("DEBUG; val=",val,"; mini=",mini,"; maxi=",maxi,file=sys.stderr)
-#    print("max test: ",int(val)<=maxi,file=sys.stderr)
+#    print("DEBUG; val=",values,"; mini=",mini,"; maxi=",maxi,file=sys.stderr)
+#    print("DEBUG patterns = ", patterns,file=sys.stderr)
     if mini is None and maxi is None:
         l = []
         if ptc_format:
