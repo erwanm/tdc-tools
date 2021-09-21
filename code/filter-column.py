@@ -34,11 +34,13 @@ def usage(out):
     print("    -M numerical maximum: <patterns> contains either a single numerical value interpreted as a maximum",file=out)
     print("       threshold or two values interpreted as minimum and maximum.",file=out)
     print("    -p PTC <concept>@<type> format in the target columns: ignore the type part, not present in targets.",file=out)
-    print("",file=out)
+    print("    -H input file contains a header as first line, ignored for fitering and printed as is.",file=out)
+    print("    -x <comma-separated values> exclude these values before comparison in numerical filtering.",file=out)
+    print("       Useful for discarding NAs.",file=out)
     print("",file=out)
 
 
-def condition_satisfied(values, patterns, mini, maxi, ptc_format):
+def condition_satisfied(values, patterns, mini, maxi, ptc_format, excluded_values):
 #    print("DEBUG; val=",values,"; mini=",mini,"; maxi=",maxi,file=sys.stderr)
 #    print("DEBUG patterns = ", patterns,file=sys.stderr)
     if mini is None and maxi is None:
@@ -55,12 +57,15 @@ def condition_satisfied(values, patterns, mini, maxi, ptc_format):
         else:
             l = values
         return '\t'.join(l) in patterns
-    elif mini is not None and maxi is not None:
-        return int(values[0])>=mini and int(values[0])<=maxi
-    elif mini is not None:
-        return int(values[0])>=mini
-    elif maxi is not None:
-        return int(values[0])<=maxi
+    else:
+        if values[0] in excluded_values:
+            return False
+        if mini is not None and maxi is not None:
+            return int(values[0])>=mini and int(values[0])<=maxi
+        elif mini is not None:
+            return int(values[0])>=mini
+        elif maxi is not None:
+            return int(values[0])<=maxi
 
 
 
@@ -71,8 +76,10 @@ opt_intersection = False
 numerical_min = False
 numerical_max = False
 ptc_format = False
+with_header = False
+excluded_values = []
 try:
-    opts, args = getopt.getopt(sys.argv[1:],"huimMp")
+    opts, args = getopt.getopt(sys.argv[1:],"huimMpHx:")
 except getopt.GetoptError:
     usage(sys.stderr)
     sys.exit(2)
@@ -90,6 +97,10 @@ for opt, arg in opts:
         numerical_max = True
     if opt == "-p":
         ptc_format= True
+    if opt == '-H':
+        with_header = True
+    if opt == '-x':
+        excluded_values = arg.split(',')
 
 if opt_union and opt_intersection:
     raise Exception("Error: incompatible options -u and -i")
@@ -140,24 +151,29 @@ if numerical_min or numerical_max:
 
 
 #print("Filtering input file...",file=sys.stderr)
+first_line = True
 with open(inputFile) as infile:
     for line in infile:
-        cols = line.rstrip().split("\t")
-        target_cols = [ cols[colNo] for colNo in colNos ]
-        if opt_union:
-            for col in target_cols:
-                if condition_satisfied([col], patterns, minimum, maximum, ptc_format):
-                    print(line,end='')
-                    break
-        elif opt_intersection:
-            line_pass = True
-            for col in target_cols:
-                if not condition_satisfied([col], patterns, minimum, maximum, ptc_format):
-                    line_pass = False
-                    break
-            if line_pass:
-                print(line,end='')
+        if with_header and first_line:
+            first_line = False
+            print(line,end='')
         else:
-            if condition_satisfied(target_cols, patterns, minimum, maximum, ptc_format):
-                print(line,end='')
+            cols = line.rstrip().split("\t")
+            target_cols = [ cols[colNo] for colNo in colNos ]
+            if opt_union:
+                for col in target_cols:
+                    if condition_satisfied([col], patterns, minimum, maximum, ptc_format, excluded_values):
+                        print(line,end='')
+                        break
+            elif opt_intersection:
+                line_pass = True
+                for col in target_cols:
+                    if not condition_satisfied([col], patterns, minimum, maximum, ptc_format, excluded_values):
+                        line_pass = False
+                        break
+                if line_pass:
+                    print(line,end='')
+            else:
+                if condition_satisfied(target_cols, patterns, minimum, maximum, ptc_format, excluded_values):
+                    print(line,end='')
 
