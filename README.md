@@ -18,3 +18,21 @@ Most of the biomedical literature is available for download from [Medline](https
 * Year-based format to facilitate analysis across time or filtering by range of years
 * Preserves link of a concept with its source sentence/document (this is possible but not implemented) 
 
+
+# Changelog
+
+## 1.0.1
+
+- [added] option to ignore PTC types in `add-term-from-umls.py`
+- [added] new script to generate a doc-concept matrix (dcm) format from a file containing the Medline Mesh descriptors by PMID
+- [added] option in `filter-column.py` to ignore NA values in numerical filtering
+- [added] new script to calculate association measures (e.g. PMI)
+
+## 1.0.0
+
+- [added] full documentation
+
+# License
+
+This software is published under the GPL 3.0 license.
+Please see file LICENSE.txt in this repository for details.
