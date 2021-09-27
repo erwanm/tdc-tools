@@ -51,6 +51,9 @@ def usage(out):
     print("    -J: joint frequency only for pairs of concepts where both concepts belong to the list of targets.",file=out)
     print("    -p: target concepts provided without type are matched against PTC formatted concepts with any type,",file=out)
     print("        for example target 'MESH:D1234567' matches 'MESH:D1234567@XXX' and 'MESH:D1234567@YYY'.",file=out)
+    print("    -g <grouping file>: adds some 'meta-concepts' made of the union of several concepts and count them",file=out)
+    print("        as well. The file is made of lines <concept> <group>. If target concepts are used, all the",file=out)
+    print("        concepts in the groups should also belong to the targets.",file=out)
     print("",file=out)
 
 
@@ -90,27 +93,33 @@ def fix_spaces_between_quotes_if_any(l):
     return res
                 
 
-# returns true iff doc_concept belongs to target_concepts, modulo type depending on ptc_match_any_type
-def concept_match(doc_concept, target_concepts, ptc_match_any_type):
-    if ptc_match_any_type:
-        sep_pos = doc_concept.rfind(SEPARATOR_CONCEPT_ID_TYPE)
-        if sep_pos == -1:
-            concept_id = doc_concept
-        else:
-            concept_id = doc_concept[0:sep_pos]
-        return concept_id in target_concepts
+def decompose_ptc_concept(ptc_concept):
+    sep_pos = ptc_concept.rfind(SEPARATOR_CONCEPT_ID_TYPE)
+    if sep_pos == -1:
+        return ptc_concept
     else:
-        return doc_concept in target_concepts
+        return ptc_concept[0:sep_pos]
 
+# returns true iff doc_concept belongs to target_concepts, modulo type depending on ptc_match_any_type
+def concept_in_set(doc_concept, target_concepts, ptc_match_any_type):
+    if ptc_match_any_type:
+        doc_concept = decompose_ptc_concept(doc_concept)
+    return doc_concept in target_concepts
 
+# returns the set corresponding to the concept if present in the 'groups' dict, empty set otherwise
+def concept_in_groups_dict(doc_concept, groups, ptc_match_any_type):
+    if ptc_match_any_type:
+        doc_concept = decompose_ptc_concept(doc_concept)
+    return groups[doc_concept]
 
 # main
 
 joint_mode = False
 joint_both_target = False
 ptc_match_any_type = False
+groupingFile = None
 try:
-    opts, args = getopt.getopt(sys.argv[1:],"hjJp")
+    opts, args = getopt.getopt(sys.argv[1:],"hjJpg:")
 except getopt.GetoptError:
     usage(sys.stderr)
     sys.exit(2)
@@ -125,13 +134,15 @@ for opt, arg in opts:
         joint_both_target = True
     elif opt == "-p":
         ptc_match_any_type = True
-#         outputfile = arg
+    elif opt == "-g":
+        groupingFile = arg
 
 #print("debug args after options: ",args)
 
 if len(args) != 1 and len(args) != 2:
     usage(sys.stderr)
     sys.exit(2)
+
 
 output_file = args[0]
 targetsFile = None
@@ -144,6 +155,14 @@ if joint_mode and targetsFile is None:
     # ignoring joint_both_target option anyway:
     joint_both_target = False
 
+
+groups = defaultdict(set)
+if groupingFile is not None:
+    with open(groupingFile) as infile:
+        for line in infile:
+            cols = line.rstrip("\n").split('\t')
+            groups[cols[0]].add(cols[1])
+        
 
 # Step 1: read input files and check them
 input_files = [ f.rstrip() for f in sys.stdin ]
@@ -192,33 +211,52 @@ for input_file in input_files:
                 concept = concept_freq_str[:s]
                 freq = concept_freq_str[s+1:]
                 # print("DEBUG concept_freq_str='%s', s=%d, concept = '%s', freq = '%s'" % (concept_freq_str, s, concept, freq),file=sys.stderr )
-                # even if not a target, the concept iq always added to the doc set in case of joint mode
+                # even if not a target, the concept is always added to the doc set in case of joint mode
                 doc_set.add(concept)
                 if not joint_mode:
                     # update multi count
                     try:
                         # total: count every concept, whether target or not
                         total_multi_concepts += int(freq)
-                        if target_concepts is None or concept_match(concept, target_concepts, ptc_match_any_type):
+                        if target_concepts is None or concept_in_set(concept, target_concepts, ptc_match_any_type):
                             indiv_multi[concept] += int(freq)
+                        grps = concept_in_groups_dict(concept, groups, ptc_match_any_type)
+                        for grp in grps: 
+                            indiv_multi[grp] += int(freq)
                     except ValueError:
                         print("File '"+input_file+"' line = '"+line+"'...", file=sys.stderr )
                         print("DEBUG concept = '%s', freq = '%s'" % (concept, freq),file=sys.stderr )
                         raise Exception("Error: Frequency not an int.")
             if joint_mode:
                 for c1 in doc_set:
-                    c1_target = target_concepts is None or concept_match(c1, target_concepts, ptc_match_any_type)
+                    c1_target = target_concepts is None or concept_in_set(c1, target_concepts, ptc_match_any_type)
                     if not joint_both_target or c1_target:
                         for c2 in doc_set:
                             if c1 < c2:
-                                c2_target = target_concepts is None or concept_match(c2, target_concepts, ptc_match_any_type)
+                                c2_target = target_concepts is None or concept_in_set(c2, target_concepts, ptc_match_any_type)
                                 if (targetsFile is None) or (joint_both_target and c1_target and c2_target) or (not joint_both_target and (c1_target or c2_target)):
-                                    joint[c1][c2] += 1
+                                    groups_c1 = concept_in_groups_dict(c1, groups, ptc_match_any_type).copy()
+                                    groups_c1.add(c1)
+                                    groups_c2 = concept_in_groups_dict(c2, groups, ptc_match_any_type).copy()
+                                    groups_c2.add(c2)
+                                    for grp1 in groups_c1:
+                                        # if grp1 belongs to groups_c2 it means that c2 belongs to grp1 -> case not counted
+                                        if grp1 not in groups_c2:
+                                            for grp2 in groups_c2:
+                                                if grp2 not in groups_c1:
+                                                    joint[grp1][grp2] += 1
+                                        
+                    for grp in groups: 
+                        indiv_set[grp] += 1
             else:
                 for c in doc_set:
                     total_unique_concepts.add(c)
-                    if target_concepts is None or concept_match(c, target_concepts, ptc_match_any_type):
+                    if target_concepts is None or concept_in_set(c, target_concepts, ptc_match_any_type):
                         indiv_set[c] += 1 
+                    grps = concept_in_groups_dict(c, groups, ptc_match_any_type)
+                    for grp in grps: 
+                        indiv_set[grp] += 1
+
 
 with open(output_file, "w") as outfile:
     if joint_mode:
