@@ -24,7 +24,8 @@ function usage {
     echo
     echo "  Options:"
     echo "    -h: print this help message."
-    echo "    -j, -J, -p: see details in get-frequency-from-doc-concept-matrix.py."
+    echo "    -o '<options>' options for get-frequency-from-doc-concept-matrix.py, e.g."
+    echo "        '-j -p -v <groups>': see details in get-frequency-from-doc-concept-matrix.py."
     echo "    -w write commands to STDOUT instead of executing them"
     echo ""
 }
@@ -43,13 +44,12 @@ function checkDirs {
 
 
 options=""
-printCommands=""
-while getopts 'hjJpw' option ; do
+while getopts 'ho:w' option ; do
     case $option in
 	"h" ) usage
 	          exit 0;;
-	"j" | "J" | "p" )  options="$options -$option";;
-	"w" ) printCommands=1;;
+        "o" ) options="$options -o \"$OPTARG\"";;
+	"w" ) options="$options -w";;
         "?" )
             echo "Error, unknow option." 1>&2
             usage 1>&2
@@ -102,57 +102,35 @@ for level in $levels; do
 
 	if [ "$outDir" == "unfiltered-medline" ]; then
 	    if [ -z "$kdData" ]; then
-		inDirs="filtered-medline pmc-abstracts"
+		inDirs="\"$inputDir/$level/filtered-medline\" \"$inputDir/$level/pmc-abstracts\""
 	    else
-		inDirs="unfiltered-medline"
+		inDirs="\"$inputDir/$level/unfiltered-medline\""
 	    fi
 	elif [ "$outDir" == "pmc-articles" ]; then
 	    if [ -z "$kdData" ]; then
-		inDirs="pmc-articles"
+		inDirs="\"$inputDir/$level/pmc-articles\""
 	    else
-		inDirs="abstracts+articles/articles"
+		inDirs="\"$inputDir/$level/abstracts+articles/articles\""
 	    fi
 	elif [ "$outDir" == "abstracts+articles" ]; then
 	    if [ -z "$kdData" ]; then
-		inDirs="filtered-medline pmc-articles"
+		inDirs="\"$inputDir/$level/filtered-medline\" \"$inputDir/$level/pmc-articles\""
 	    else
-		inDirs="abstracts+articles/abstracts abstracts+articles/articles"
+		inDirs="\"$inputDir/$level/abstracts+articles/abstracts\" \"$inputDir/$level/abstracts+articles/articles\""
 	    fi
 	else
 	    echo "BUG" 1>&2
 	    exit 1
 	fi
 
-	all=""
-	for inDir in $inDirs; do
-	    fullInDir="$inputDir/$level/$inDir"
-	    if [ ! -d "$fullInDir" ]; then
-		echo "Error: no dir '$fullInDir'" 1>&2
-		exit 1
-	    else
-		all="$all $fullInDir/REPLACE"
-	    fi
-	done
-	echo "$level / $outDir: input dirs = '$all', output = $fullOutDir" 1>&2
-	allLS=$(echo "$all" | sed 's:REPLACE:*:g')
-	ls $allLS | while read f; do
-	    b=$(basename "$f")
-	    y=${b%%.*}
-	    echo "$y"
-	done | sort -u | while read year; do
-	    yearLS=$(echo "$all" | sed "s:REPLACE:$year\*:g")
-	    command="ls $yearLS 2>/dev/null | python3 $DIR/get-frequency-from-doc-concept-matrix.py $options \"$fullOutDir/$year\" $targetsFile 2>\"$fullOutDir/$year.err\"" 
-	    if [ -z "$printCommands" ]; then
-		eval "$command"
-		if [ $? -ne 0 ]; then
-		    echo "Error with command:" 1>&2
-		    echo "$command" 1>&2
-		    exit 1
-		fi
-	    else
-		echo "$command"
-	    fi
-	done
+	if [ -z "$targets" ]; then
+	    comm="echo $inDirs | $DIR/get-frequency-from-doc-concept-matrix-single-dir.sh $options \"$fullOutDir\""
+	else
+	    comm="echo $inDirs | $DIR/get-frequency-from-doc-concept-matrix-single-dir.sh $options \"$fullOutDir\" \"$targetsFile\""
+	fi
+#	echo "DEBUG"
+#	echo "$comm"
+	eval "$comm"
 	if [ $? -ne 0 ]; then
 	    exit 1
 	fi
@@ -163,7 +141,4 @@ for level in $levels; do
     fi
     
 done
-if [ $? -ne 0 ]; then
-    exit 1
-fi
 
