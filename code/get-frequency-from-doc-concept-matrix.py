@@ -110,7 +110,16 @@ def concept_in_set(doc_concept, target_concepts, ptc_match_any_type):
 def concept_in_groups_dict(doc_concept, groups, ptc_match_any_type):
     if ptc_match_any_type:
         doc_concept = decompose_ptc_concept(doc_concept)
-    return groups[doc_concept]
+    return groups.get(doc_concept)
+
+def add_to_possibly_none_group(doc_concept, groups, ptc_match_any_type):
+    groups_c = concept_in_groups_dict(doc_concept, groups, ptc_match_any_type)
+    if groups_c is None:
+        set_c = set([doc_concept])
+    else:
+        set_c = groups_c.copy()
+        set_c.add(doc_concept)
+    return set_c
 
 # main
 
@@ -221,8 +230,9 @@ for input_file in input_files:
                         if target_concepts is None or concept_in_set(concept, target_concepts, ptc_match_any_type):
                             indiv_multi[concept] += int(freq)
                         grps = concept_in_groups_dict(concept, groups, ptc_match_any_type)
-                        for grp in grps: 
-                            indiv_multi[grp] += int(freq)
+                        if grps is not None:
+                            for grp in grps: 
+                                indiv_multi[grp] += int(freq)
                     except ValueError:
                         print("File '"+input_file+"' line = '"+line+"'...", file=sys.stderr )
                         print("DEBUG concept = '%s', freq = '%s'" % (concept, freq),file=sys.stderr )
@@ -235,15 +245,13 @@ for input_file in input_files:
                             if c1 < c2:
                                 c2_target = target_concepts is None or concept_in_set(c2, target_concepts, ptc_match_any_type)
                                 if (targetsFile is None) or (joint_both_target and c1_target and c2_target) or (not joint_both_target and (c1_target or c2_target)):
-                                    groups_c1 = concept_in_groups_dict(c1, groups, ptc_match_any_type).copy()
-                                    groups_c1.add(c1)
-                                    groups_c2 = concept_in_groups_dict(c2, groups, ptc_match_any_type).copy()
-                                    groups_c2.add(c2)
-                                    for grp1 in groups_c1:
+                                    set_c1 = add_to_possibly_none_group(c1, groups, ptc_match_any_type)
+                                    set_c2 = add_to_possibly_none_group(c2, groups, ptc_match_any_type)
+                                    for grp1 in set_c1:
                                         # if grp1 belongs to groups_c2 it means that c2 belongs to grp1 -> case not counted
-                                        if grp1 not in groups_c2:
-                                            for grp2 in groups_c2:
-                                                if grp2 not in groups_c1:
+                                        if grp1 not in set_c2:
+                                            for grp2 in set_c2:
+                                                if grp2 not in set_c1:
                                                     joint[grp1][grp2] += 1
                                         
                     for grp in groups: 
@@ -254,8 +262,9 @@ for input_file in input_files:
                     if target_concepts is None or concept_in_set(c, target_concepts, ptc_match_any_type):
                         indiv_set[c] += 1 
                     grps = concept_in_groups_dict(c, groups, ptc_match_any_type)
-                    for grp in grps: 
-                        indiv_set[grp] += 1
+                    if grps is not None:
+                        for grp in grps: 
+                            indiv_set[grp] += 1
 
 
 with open(output_file, "w") as outfile:
