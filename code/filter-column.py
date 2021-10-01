@@ -61,11 +61,11 @@ def condition_satisfied(values, patterns, mini, maxi, ptc_format, excluded_value
         if values[0] in excluded_values:
             return False
         if mini is not None and maxi is not None:
-            return int(values[0])>=mini and int(values[0])<=maxi
+            return float(values[0])>=mini and float(values[0])<=maxi
         elif mini is not None:
-            return int(values[0])>=mini
+            return float(values[0])>=mini
         elif maxi is not None:
-            return int(values[0])<=maxi
+            return float(values[0])<=maxi
 
 
 
@@ -125,7 +125,7 @@ for line in sys.stdin:
     val = line.rstrip()
     if numerical_min or numerical_max:
         for v in val.split():
-            patterns.add(int(v))
+            patterns.add(float(v))
     else:
         if not opt_union and not opt_intersection:
             n = len(val.split('\t'))
