@@ -179,12 +179,13 @@ for input_file in input_files:
                 cols = line.rstrip().split('\t')
                 concept_id = cols[INPUT_COL_CONCEPT_ID]
                 cui_list = None
-                if REMOVE_MESH_PREFIX:
-                    if concept_id[:5] == 'MESH:':
-                        is_mesh = True
-                        concept_id = concept_id[5:]
-                    else:
-                        is_mesh = False
+                if USE_MESH_IDS:
+                    is_mesh = True
+                    if REMOVE_MESH_PREFIX:
+                        if concept_id[:5] == 'MESH:':
+                            concept_id = concept_id[5:]
+                        else:
+                            is_mesh = False
                 if PTC_INPUT:
                     sep_pos = concept_id.rfind(SEPARATOR_CONCEPT_ID_TYPE)
                     if sep_pos != -1:
