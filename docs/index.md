@@ -10,7 +10,7 @@ This is the documentation of the [TDC Tools repository](https://github.com/erwan
 * [Collect individual and joint frequency by concept](collecting-frequency-by-concept)
 * [UMLS and MeSH utilities](umls-mesh-utilities)
 * [Use-case: preparing the ND dataset for LBD contrast analysis](ND-use-case)
-
+* [Convert the Medline MeSH descriptors by PMID to DCM format](mesh-descriptors-by-pmid)
 
 ## Overview
 

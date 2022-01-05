@@ -1,6 +1,10 @@
 
 # Use-case: preparing the ND datasets for LBD contrast analysis
 
+* Top: [Main Documentation](..)
+* Previous: [tdc-tools: UMLS and MeSH utilities](../umls-mesh-utilities)
+* Next: [Convert the Medline MeSH descriptors by PMID to DCM format](../mesh-descriptors-by-pmid)
+
 ## Overview
 
 This document examplifies the process of preparing two datasets (KD-based and PTC-based) for LBD analysis based on concepts co-occurrences using `tdc-tools`.

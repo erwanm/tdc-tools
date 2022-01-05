@@ -21,10 +21,16 @@ Most of the biomedical literature is available for download from [Medline](https
 
 # Changelog
 
+## 1.0.2
+
+- [added] group option for script get-frequency-from-doc-concept-matrix.py and related bash scripts
+- [added] [documentation](https://erwanm.github.io/tdc-tools/mesh-descriptors-by-pmid) for script `build-dcm-from-mesh-descriptors-by-pmid.py`
+- [fixed] minor issues in documentation
+
 ## 1.0.1
 
 - [added] option to ignore PTC types in `add-term-from-umls.py`
-- [added] new script to generate a doc-concept matrix (dcm) format from a file containing the Medline Mesh descriptors by PMID
+- [added] new script `build-dcm-from-mesh-descriptors-by-pmid.py` to generate a doc-concept matrix (dcm) format from a file containing the Medline Mesh descriptors by PMID
 - [added] option in `filter-column.py` to ignore NA values in numerical filtering
 - [added] new script to calculate association measures (e.g. PMI)
 
