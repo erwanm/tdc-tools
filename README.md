@@ -2,7 +2,7 @@
 Tools for representing and manipulating data in the Tabular Document-Concept (TDC) format
 
 * Documentation: https://erwanm.github.io/tdc-tools/
-* Associated paper: **pending** (if you use this code for your research please cite the paper).
+* [Associated paper](https://zenodo.org/record/6380693)  (if you use this code for your research please cite the paper).
 * KD and PTC datasets generated from the January 2021 data: https://zenodo.org/record/5138386
 
 
